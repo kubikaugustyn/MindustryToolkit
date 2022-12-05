@@ -1,0 +1,10 @@
+displayName: "Mindustry Toolkit"
+subtitle: "PvP, AutoFill and much more"
+name: "mindustry-toolkit-kubikaugustyn"
+author: "Jakub Augustýn"
+main: "MindustryToolkit.MindustryToolkitInit"
+description: "A Mindustry toolkit mod by GitHub - kubikaugustyn / HackerKuba2009"
+version: 1.0
+minGameVersion: 140
+hidden: true
+java: true
