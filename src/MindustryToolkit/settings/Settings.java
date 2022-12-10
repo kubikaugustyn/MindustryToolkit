@@ -7,14 +7,14 @@ import arc.util.*;
 import mindustry.ui.dialogs.FullTextDialog;
 import mindustry.ui.dialogs.SettingsMenuDialog;
 
-import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static arc.Core.bundle;
+import static mindustry.Vars.defaultEnv;
 import static mindustry.Vars.ui;
 
-public class InitSettings {
-    public InitSettings() {
+public class Settings {
+    public Settings() {
     }
 
     public void init() {
@@ -24,14 +24,14 @@ public class InitSettings {
             AtomicReference<String> targetLanguage = new AtomicReference<>(Core.settings.getString("target-language", "en-GB"));
 
             SettingsMenuDialog.SettingsTable settings = new SettingsMenuDialog.SettingsTable();
-            settings.areaTextPref(bundle.get("mindustry-toolkit-kubikaugustyn.settings.auth-key"), "", authKey::set);
-            settings.textPref(bundle.get("mindustry-toolkit-kubikaugustyn.settings.target-language"), "en-GB", targetLanguage::set);
+            settings.areaTextPref(this.getText("auth-key"), "", authKey::set);
+            settings.textPref(this.getText("target-language"), "en-GB", targetLanguage::set);
 
             settings.pref(new ButtonSetting("Save", () -> {
                 showDialog("Save", "Save!");
             }));
 
-            settings.checkPref(bundle.get("mindustry-toolkit-kubikaugustyn.settings.enabled"), true, e -> Core.settings.put("mindustry-toolkit-kubikaugustyn-enabled", e));
+            settings.checkPref(this.getText("enabled"), true, e -> this.saveSetting("mindustry-toolkit-kubikaugustyn-enabled", e));
 
             settingsTable.add(settings);
         };
@@ -59,5 +59,21 @@ public class InitSettings {
             table.button(name, clicked).margin(14).width(240f).pad(6);
             table.row();
         }
+    }
+
+    private void saveSetting(String name, Object object) {
+        Core.settings.put(name, object);
+    }
+
+    private String getText(String name) {
+        String key = "mindustry-toolkit-kubikaugustyn.settings." + name;
+        String text = bundle.get(key);
+        return text;
+    }
+
+    private String getText(String name, String def) {
+        String key = "mindustry-toolkit-kubikaugustyn.settings." + name;
+        String text = bundle.get(key, def);
+        return text;
     }
 }

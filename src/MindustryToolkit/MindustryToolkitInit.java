@@ -1,35 +1,17 @@
 package MindustryToolkit;
 
-import MindustryToolkit.settings.InitSettings;
-import arc.*;
+import MindustryToolkit.autofill.AutoFill;
+import MindustryToolkit.settings.Settings;
 import arc.util.*;
-import mindustry.game.EventType.*;
 import mindustry.mod.*;
-import mindustry.ui.dialogs.*;
-
-import static arc.Core.bundle;
+import mindustry.type.Item;
+import mindustry.world.blocks.defense.turrets.ItemTurret;
+import mindustry.content.Blocks;
+import mindustry.world.blocks.storage.CoreBlock;
 
 public class MindustryToolkitInit extends Mod {
-    InitSettings settingsInit = new InitSettings();
-
-    /*public MindustryToolkitInit() {
-        Log.info("[cyan]Loaded MindustryToolkit constructor.");
-        bundle.get("auto-translate.settings.enabled");
-
-        //listen for game load event
-        Events.on(ClientLoadEvent.class, e -> {
-            //show dialog upon startup
-
-            Time.runTask(10f, () -> {
-                BaseDialog dialog = new BaseDialog("Frog");
-                dialog.cont.add("Behold").row();
-                //mod sprites are prefixed with the mod name (this mod is called 'example-java-mod' in its config)
-                dialog.cont.image(Core.atlas.find("mindustry-toolkit-kubikaugustyn-frog")).pad(20f).row();
-                dialog.cont.button("I see", dialog::hide).size(100f, 50f);
-                dialog.show();
-            });
-        });
-    }*/
+    Settings settings = new Settings();
+    AutoFill autoFill = new AutoFill();
 
     @Override
     public void loadContent() {
@@ -38,6 +20,7 @@ public class MindustryToolkitInit extends Mod {
 
     @Override
     public void init() {
-        settingsInit.init();
+        settings.init();
+        autoFill.init();
     }
 }
