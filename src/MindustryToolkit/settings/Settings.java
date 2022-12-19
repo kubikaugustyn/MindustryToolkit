@@ -20,22 +20,20 @@ public class Settings {
     public void init() {
         Log.info("[cyan]Init Mindustry Toolkit settings");
         Cons<SettingsMenuDialog.SettingsTable> builder = settingsTable -> {
-            AtomicReference<String> authKey = new AtomicReference<>(Core.settings.getString("auth-key", ""));
-            AtomicReference<String> targetLanguage = new AtomicReference<>(Core.settings.getString("target-language", "en-GB"));
-
             SettingsMenuDialog.SettingsTable settings = new SettingsMenuDialog.SettingsTable();
-            settings.areaTextPref(this.getText("auth-key"), "", authKey::set);
-            settings.textPref(this.getText("target-language"), "en-GB", targetLanguage::set);
-
             settings.pref(new ButtonSetting("Save", () -> {
                 showDialog("Save", "Save!");
             }));
 
-            settings.checkPref(this.getText("enabled"), true, e -> this.saveSetting("mindustry-toolkit-kubikaugustyn-enabled", e));
+            settings.checkPref(getText("enabled"), true, e -> this.saveSetting("mindustry-toolkit-kubikaugustyn-enabled", e));
 
             settingsTable.add(settings);
         };
         ui.settings.getCategories().add(new SettingsMenuDialog.SettingsCategory(bundle.get("mindustry-toolkit-kubikaugustyn.settings.title"), new TextureRegionDrawable(Core.atlas.find("mindustry-toolkit-kubikaugustyn-logo")), builder));
+    }
+
+    public String getSettingsNamePrefix() {
+        return "mindustry-toolkit-kubikaugustyn-";
     }
 
     private void showDialog(String title, String message) {
@@ -44,7 +42,7 @@ public class Settings {
         baseDialog.show(title, message);
     }
 
-    private class ButtonSetting extends SettingsMenuDialog.SettingsTable.Setting {
+    private static class ButtonSetting extends SettingsMenuDialog.SettingsTable.Setting {
         String name;
         Runnable clicked;
 
@@ -65,15 +63,13 @@ public class Settings {
         Core.settings.put(name, object);
     }
 
-    private String getText(String name) {
+    public static String getText(String name) {
         String key = "mindustry-toolkit-kubikaugustyn.settings." + name;
-        String text = bundle.get(key);
-        return text;
+        return bundle.get(key);
     }
 
-    private String getText(String name, String def) {
+    public static String getText(String name, String def) {
         String key = "mindustry-toolkit-kubikaugustyn.settings." + name;
-        String text = bundle.get(key, def);
-        return text;
+        return bundle.get(key, def);
     }
 }

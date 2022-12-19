@@ -1,5 +1,6 @@
 package MindustryToolkit.autofill;
 
+import MindustryToolkit.settings.AutoFillSettings;
 import arc.Events;
 import mindustry.Vars;
 import mindustry.entities.bullet.BulletType;
@@ -17,7 +18,6 @@ import mindustry.type.Item;
 import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitFactory;
 import mindustry.world.consumers.*;
-import mindustry.world.modules.ItemModule;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -25,8 +25,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AutoFill {
-    public InteractTimer interactTimer = new InteractTimer();
-    public static final String[] ignoredBlocks = { // To prevent random conveyor filling etc.
+    private final InteractTimer interactTimer = new InteractTimer();
+    private final AutoFillSettings settings = new AutoFillSettings();
+    private static final String[] ignoredBlocks = {// To prevent random conveyor filling etc.
             // Storage
             "core-shard",
             "core-foundation",
@@ -74,6 +75,7 @@ public class AutoFill {
     };
 
     public void init() {
+        settings.init();
         Events.run(EventType.Trigger.update, this::onUpdate);
     }
 
@@ -88,13 +90,13 @@ public class AutoFill {
         AtomicBoolean transfered = new AtomicBoolean(false);
         AtomicReference<Item> request = new AtomicReference<>(null);
         // Search Blocks
-        Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (a) -> true, b -> {
+        Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()), b -> {
             if (!interactTimer.canInteract()) return;
 
             // Blocks Declaration
             Block block = b.tile.block();
             String blockname = block.getDisplayName(b.tile);
-            String blockId = block.name;
+            // String blockId = getBlockId(block);
 
             //Check If block eats items
             //if (!block.consumesItem)// In v6
@@ -103,19 +105,15 @@ public class AutoFill {
                 return;
             }
             // Filtering Core and Container extender and some useless Buildings
-            for (String id : ignoredBlocks) {
-                if (Objects.equals(blockId, id)) { // Not my idea, just Intellij IDEA
-                    // Vars.player.sendMessage("Core Detected : " + blockname);
-                    return;
-                }
-            }
+            // No longer needed, it's in the pred function in Vars.indexer.eachBlock call
+            // if (isBlockIgnored(block)) return;
 
             // Transfer item?
             // Vars.player.sendMessage("Detected " + blockname);
             if (b.acceptStack(stack.item, stack.amount, player.unit()) >= 1) {
                 Call.transferInventory(player, b);
                 Vars.player.sendMessage("Transferred To " + blockname);
-                interactTimer.increase();
+                interactTimer.update();
                 transfered.set(true);
             }
 
@@ -148,16 +146,27 @@ public class AutoFill {
         } else {
             Call.requestItem(player, core, request.get(), 999);
         }
-        interactTimer.increase();
+        interactTimer.update();
+    }
+
+    private String getBlockId(Block block) {
+        return block.name;
+    }
+
+    private boolean isBlockIgnored(Block block) {
+        String blockId = getBlockId(block);
+        for (String id : ignoredBlocks) {
+            if (Objects.equals(blockId, id)) { // Not my idea, just Intellij IDEA
+                // Vars.player.sendMessage("Core Detected : " + blockname);
+                return true;
+            }
+        }
+        return false;
     }
 
     public ItemStack[] getItemStacks(ConsumeItems[] consumedItems) {
         int len = 0;
-        for (ConsumeItems items : consumedItems) {
-            for (ItemStack itemStack : items.items) {
-                len++;
-            }
-        }
+        for (ConsumeItems items : consumedItems) len += items.items.length;
         int i = 0;
         ItemStack[] itemStacks = new ItemStack[len];
         for (ConsumeItems items : consumedItems) {
