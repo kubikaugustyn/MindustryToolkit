@@ -2,13 +2,17 @@ package MindustryToolkit.autofill;
 
 import MindustryToolkit.settings.AutoFillSettings;
 import arc.Events;
+import arc.struct.ObjectMap;
+import arc.util.Log;
 import mindustry.Vars;
+import mindustry.content.Blocks;
 import mindustry.entities.bullet.BulletType;
 import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
+import mindustry.gen.Teamc;
 import mindustry.type.ItemStack;
 import mindustry.world.Block;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
@@ -19,14 +23,16 @@ import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitFactory;
 import mindustry.world.consumers.*;
 
+import javax.sound.midi.Sequence;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AutoFill {
     private final InteractTimer interactTimer = new InteractTimer();
-    private final AutoFillSettings settings = new AutoFillSettings();
     private static final String[] ignoredBlocks = {// To prevent random conveyor filling etc.
             // Storage
             "core-shard",
@@ -75,22 +81,22 @@ public class AutoFill {
     };
 
     public void init() {
-        settings.init();
+        AutoFillSettings.init();
         Events.run(EventType.Trigger.update, this::onUpdate);
     }
 
     private void onUpdate() {
-        if (!interactTimer.canInteract()) return;
+        if (!AutoFillSettings.enabled || !interactTimer.canInteract() || Vars.state.isPaused()) return;
         Player player = Vars.player;
         ItemStack stack = player.unit().stack;
         Team team = player.team();
         CoreBlock.CoreBuild core = player.closestCore();
         boolean isCoreAvailable = core != null;
 
-        AtomicBoolean transfered = new AtomicBoolean(false);
+        AtomicBoolean transferred = new AtomicBoolean(false);
         AtomicReference<Item> request = new AtomicReference<>(null);
         // Search Blocks
-        Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()), b -> {
+        Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()) && building.block.hasConsumers, b -> {
             if (!interactTimer.canInteract()) return;
 
             // Blocks Declaration
@@ -100,10 +106,11 @@ public class AutoFill {
 
             //Check If block eats items
             //if (!block.consumesItem)// In v6
-            if (!block.hasConsumers) {// In v7, Kuba's sketchy way
+            /*if (!block.hasConsumers) {// In v7, Kuba's sketchy way
+                No longer needed
                 // Vars.player.sendMessage("Can't Eat : " + blockname);
                 return;
-            }
+            }*/
             // Filtering Core and Container extender and some useless Buildings
             // No longer needed, it's in the pred function in Vars.indexer.eachBlock call
             // if (isBlockIgnored(block)) return;
@@ -112,18 +119,29 @@ public class AutoFill {
             // Vars.player.sendMessage("Detected " + blockname);
             if (b.acceptStack(stack.item, stack.amount, player.unit()) >= 1) {
                 Call.transferInventory(player, b);
-                Vars.player.sendMessage("Transferred To " + blockname);
+                Vars.player.sendMessage("Transferred to " + blockname);
                 interactTimer.update();
-                transfered.set(true);
+                transferred.set(true);
             }
 
             if (!isCoreAvailable || request.get() != null) return;
 
             if (block instanceof ItemTurret) { // Fill item turrets
                 // if (!b.ammo.isEmpty()) return;// v6
-                if (!((ItemTurret) block).ammoTypes.isEmpty()) return;
-
-                request.set(getBestAmmo((ItemTurret) block, core));
+                if (((ItemTurret) block).ammoTypes.isEmpty()) return;
+                if (b.items.any()) return;
+                // Log.info("[cyan]Fill turret!");
+                // Item bestAmmo = getBestAmmo((ItemTurret) block, core); Old way
+                Item[] bestAmmoList = AutoFillSettings.turretAmmo.get((ItemTurret) block);
+                Item bestAmmo = null;
+                for (Item ammo : bestAmmoList)
+                    if (core.items.get(ammo) >= AutoFillSettings.minTurretCoreItems) {
+                        bestAmmo = ammo;
+                        break;
+                    }
+                if (bestAmmo == null) return;
+                Vars.player.sendMessage("Chose " + bestAmmo.localizedName + " to fill " + block.localizedName + " at " + b.tile().x + " " + b.tile().y + " with " + b.items.total() + " items inside out of " + b.getMaximumAccepted(null));
+                request.set(bestAmmo);
             } else if (block instanceof UnitFactory) { // Fill unit factory
                 request.set(getUnitFactoryRequest((UnitFactory.UnitFactoryBuild) b, (UnitFactory) block, core));
             } else if (block instanceof Reconstructor) { // Fill unit reconstructor
@@ -134,7 +152,7 @@ public class AutoFill {
                 request.set(getItemRequest(b, block, core));
             }*/
         });
-        if (!isCoreAvailable || transfered.get() || request.get() == null || !player.within(core, Vars.buildingRange)) {
+        if (!isCoreAvailable || transferred.get() || request.get() == null || !player.within(core, Vars.buildingRange)) {
             return;
         }
 
@@ -186,12 +204,31 @@ public class AutoFill {
         AtomicReference<Float> bestDamage = new AtomicReference<>((float) 0);
         turret.ammoTypes.each((Item item, BulletType ammo) -> {
             float totalDamage = ammo.damage + ammo.splashDamage;
-            if (!ammo.makeFire && totalDamage > bestDamage.get() && core.items.get(item) >= 20) {
+            if ((!AutoFillSettings.allowHomingAmmo || ammo.homingPower <= 0f) && (!AutoFillSettings.allowFireAmmo || !ammo.makeFire) && totalDamage > bestDamage.get() && core.items.get(item) >= AutoFillSettings.minTurretCoreItems) {
                 best.set(item);
                 bestDamage.set(totalDamage);
             }
         });
         return best.get();
+    }
+
+    public static Item[] getBestAmmoList(ItemTurret turret) {
+        //        Log.info(turret == null ? "Has turret!" : "No turret...");
+        ItemDamage[] itemDamages = new ItemDamage[turret.ammoTypes.size];
+        AtomicInteger i = new AtomicInteger(0);
+        turret.ammoTypes.each((Item item, BulletType ammo) -> {
+            if (!(!AutoFillSettings.allowHomingAmmo || ammo.homingPower <= 0f)) return; // Allow homing ammo setting
+            if (!(!AutoFillSettings.allowFireAmmo || !ammo.makeFire)) return; // Allow fire ammo setting
+            float totalDamage = ammo.damage + ammo.splashDamage;
+            itemDamages[i.get()] = new ItemDamage(item, totalDamage);
+            i.incrementAndGet();
+        });
+        Arrays.sort(itemDamages);
+        Item[] ammoListSorted = new Item[turret.ammoTypes.size];
+        int index = 0;
+        for (ItemDamage itemDamage : itemDamages) ammoListSorted[index++] = itemDamage.ammo;
+        return ammoListSorted;
+        //        return null;
     }
 
     public Item getUnitFactoryRequest(UnitFactory.UnitFactoryBuild build, UnitFactory block, CoreBlock.CoreBuild core) {
@@ -220,5 +257,34 @@ public class AutoFill {
             }
         }
         return null;
+    }
+
+    private static class ItemDamage implements Comparable<ItemDamage> {
+        public Item ammo;
+        public float damage;
+
+        ItemDamage() {
+
+        }
+
+        ItemDamage(Item ammo, float damage) {
+            this.ammo = ammo;
+            this.damage = damage;
+        }
+
+        @Override
+        public int compareTo(ItemDamage itemDamage) {
+            /*
+            -1 this > other
+             0 this = other
+             1 this < other
+            */
+            // this.damage
+            // itemDamage.damage
+            // return Float.compare(, ); // Again Intellij IDEA
+            if (this.damage > itemDamage.damage) return 1;
+            else if (this.damage == itemDamage.damage) return 0;
+            else return -1;
+        }
     }
 }

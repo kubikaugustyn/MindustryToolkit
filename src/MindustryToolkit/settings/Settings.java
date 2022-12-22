@@ -1,5 +1,6 @@
 package MindustryToolkit.settings;
 
+import MindustryToolkit.dialogs.AutoFillDialog;
 import arc.Core;
 import arc.func.Cons;
 import arc.scene.style.TextureRegionDrawable;
@@ -7,10 +8,7 @@ import arc.util.*;
 import mindustry.ui.dialogs.FullTextDialog;
 import mindustry.ui.dialogs.SettingsMenuDialog;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import static arc.Core.bundle;
-import static mindustry.Vars.defaultEnv;
 import static mindustry.Vars.ui;
 
 public class Settings {
@@ -21,6 +19,8 @@ public class Settings {
         Log.info("[cyan]Init Mindustry Toolkit settings");
         Cons<SettingsMenuDialog.SettingsTable> builder = settingsTable -> {
             SettingsMenuDialog.SettingsTable settings = new SettingsMenuDialog.SettingsTable();
+            AutoFillDialog autoFillDialog = new AutoFillDialog();
+            settings.pref(new ButtonSetting(AutoFillDialog.title, autoFillDialog::show));
             settings.pref(new ButtonSetting("Save", () -> {
                 showDialog("Save", "Save!");
             }));

@@ -3,11 +3,8 @@ package MindustryToolkit;
 import MindustryToolkit.autofill.AutoFill;
 import MindustryToolkit.settings.Settings;
 import arc.util.*;
-import mindustry.mod.*;
-import mindustry.type.Item;
-import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.content.Blocks;
-import mindustry.world.blocks.storage.CoreBlock;
+import mindustry.mod.*;
 
 public class MindustryToolkitInit extends Mod {
     Settings settings = new Settings();
@@ -20,6 +17,8 @@ public class MindustryToolkitInit extends Mod {
 
     @Override
     public void init() {
+        Log.info("[blue]Initialising, duo id is: ");
+        Log.info("[yellow]" + Blocks.duo.name);
         settings.init();
         autoFill.init();
     }
