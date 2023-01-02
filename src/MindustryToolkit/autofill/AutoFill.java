@@ -2,8 +2,7 @@ package MindustryToolkit.autofill;
 
 import MindustryToolkit.settings.AutoFillSettings;
 import arc.Events;
-import arc.struct.ObjectMap;
-import arc.util.Log;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.entities.bullet.BulletType;
@@ -12,9 +11,9 @@ import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
-import mindustry.gen.Teamc;
 import mindustry.type.ItemStack;
 import mindustry.world.Block;
+import mindustry.world.Build;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.blocks.storage.CoreBlock;
@@ -23,13 +22,12 @@ import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitFactory;
 import mindustry.world.consumers.*;
 
-import javax.sound.midi.Sequence;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class AutoFill {
     private final InteractTimer interactTimer = new InteractTimer();
@@ -86,6 +84,7 @@ public class AutoFill {
     }
 
     private void onUpdate() {
+        if (Vars.state.isPaused() || Vars.state.isMenu() || Vars.player.unit().dead()) return;
         if (!AutoFillSettings.enabled || !interactTimer.canInteract() || Vars.state.isPaused()) return;
         Player player = Vars.player;
         ItemStack stack = player.unit().stack;
@@ -96,62 +95,96 @@ public class AutoFill {
         AtomicBoolean transferred = new AtomicBoolean(false);
         AtomicReference<Item> request = new AtomicReference<>(null);
         // Search Blocks
-        Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()) && building.block.hasConsumers, b -> {
-            if (!interactTimer.canInteract()) return;
-
-            // Blocks Declaration
-            Block block = b.tile.block();
-            String blockname = block.getDisplayName(b.tile);
-            // String blockId = getBlockId(block);
-
-            //Check If block eats items
-            //if (!block.consumesItem)// In v6
-            /*if (!block.hasConsumers) {// In v7, Kuba's sketchy way
-                No longer needed
-                // Vars.player.sendMessage("Can't Eat : " + blockname);
-                return;
-            }*/
-            // Filtering Core and Container extender and some useless Buildings
-            // No longer needed, it's in the pred function in Vars.indexer.eachBlock call
-            // if (isBlockIgnored(block)) return;
-
-            // Transfer item?
-            // Vars.player.sendMessage("Detected " + blockname);
-            if (b.acceptStack(stack.item, stack.amount, player.unit()) >= 1) {
-                Call.transferInventory(player, b);
-                Vars.player.sendMessage("Transferred to " + blockname);
-                interactTimer.update();
-                transferred.set(true);
-            }
-
-            if (!isCoreAvailable || request.get() != null) return;
-
-            if (block instanceof ItemTurret) { // Fill item turrets
-                // if (!b.ammo.isEmpty()) return;// v6
-                if (((ItemTurret) block).ammoTypes.isEmpty()) return;
-                if (b.items.any()) return;
-                // Log.info("[cyan]Fill turret!");
-                // Item bestAmmo = getBestAmmo((ItemTurret) block, core); Old way
-                Item[] bestAmmoList = AutoFillSettings.turretAmmo.get((ItemTurret) block);
-                Item bestAmmo = null;
-                for (Item ammo : bestAmmoList)
-                    if (core.items.get(ammo) >= AutoFillSettings.minTurretCoreItems) {
-                        bestAmmo = ammo;
-                        break;
+        Seq<Building> buildingsInRange = new Seq<>(new Building[]{});
+        Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()) && building.block.hasConsumers, buildingsInRange::add);
+        if (buildingsInRange.size > 0 && isCoreAvailable) {
+            FillableBlockCategory[] categories = this.getBlocksToFill(buildingsInRange.items);
+            for (FillableBlockCategory category : categories) {
+                boolean isTurret = Objects.equals(category.name(), "turret");
+                for (FillableBlock block : category.blocks()) {
+                    if (isTurret) {
+                        // if (!b.ammo.isEmpty()) return;// v6
+                        if (((ItemTurret) block.block()).ammoTypes.isEmpty()) return;
+                        if (block.building().items.any()) return;
+                        // Log.info("[cyan]Fill turret!");
+                        // Item bestAmmo = getBestAmmo((ItemTurret) block, core); Old way
+                        Item[] bestAmmoList = AutoFillSettings.turretAmmo.get((ItemTurret) block.block());
+                        Item bestAmmo = null;
+                        for (Item ammo : bestAmmoList) {
+                            if (core.items.get(ammo) >= AutoFillSettings.minTurretCoreItems) {
+                                bestAmmo = ammo;
+                                break;
+                            }
+                        }
+                        if (bestAmmo == null) return;
+                        Vars.player.sendMessage("Chose " + bestAmmo.localizedName + " to fill " + block.block().localizedName + " at " + block.building().tile().x + " " + block.building().tile().y + " with " + block.building().items.total() + " items inside out of " + block.building().getMaximumAccepted(null));
+                        request.set(bestAmmo);
+                    } else if (block.building() != null) {
+                        request.set(findRequiredItem(block.itemsIn(), block.building(), core));
+                    } else {
+                        request.set(block.itemsIn()[0]);
                     }
-                if (bestAmmo == null) return;
-                Vars.player.sendMessage("Chose " + bestAmmo.localizedName + " to fill " + block.localizedName + " at " + b.tile().x + " " + b.tile().y + " with " + b.items.total() + " items inside out of " + b.getMaximumAccepted(null));
-                request.set(bestAmmo);
-            } else if (block instanceof UnitFactory) { // Fill unit factory
-                request.set(getUnitFactoryRequest((UnitFactory.UnitFactoryBuild) b, (UnitFactory) block, core));
-            } else if (block instanceof Reconstructor) { // Fill unit reconstructor
-                request.set(getReconstructorRequest((Reconstructor.ReconstructorBuild) b, (Reconstructor) block, core));
-            } else if (block instanceof GenericCrafter) {
-                request.set(findRequiredItem(getItemStacks(getItemConsumers(block)), b, core));
-            } /*else if (b.items) {
-                request.set(getItemRequest(b, block, core));
-            }*/
-        });
+                }
+            }
+        }
+
+        String a = """
+                    Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()) && building.block.hasConsumers, b -> {
+                    if (!interactTimer.canInteract()) return;
+
+                    // Blocks Declaration
+                    Block block = b.tile.block();
+                    String blockname = block.getDisplayName(b.tile);
+                    // String blockId = getBlockId(block);
+
+                    //Check If block eats items
+                    //if (!block.consumesItem)// In v6
+                    /*if (!block.hasConsumers) {// In v7, Kuba's sketchy way
+                        No longer needed
+                        // Vars.player.sendMessage("Can't Eat : " + blockname);
+                        return;
+                    }*/
+                    // Filtering Core and Container extender and some useless Buildings
+                    // No longer needed, it's in the pred function in Vars.indexer.eachBlock call
+                    // if (isBlockIgnored(block)) return;
+
+                    // Transfer item?
+                    // Vars.player.sendMessage("Detected " + blockname);
+                    if (b.acceptStack(stack.item, stack.amount, player.unit()) >= 1) {
+                        Call.transferInventory(player, b);
+                        Vars.player.sendMessage("Transferred to " + blockname);
+                        interactTimer.update();
+                        transferred.set(true);
+                    }
+
+                    if (!isCoreAvailable || request.get() != null) return;
+
+                    if (block instanceof ItemTurret) { // Fill item turrets
+                        // if (!b.ammo.isEmpty()) return;// v6
+                        if (((ItemTurret) block).ammoTypes.isEmpty()) return;
+                        if (b.items.any()) return;
+                        // Log.info("[cyan]Fill turret!");
+                        // Item bestAmmo = getBestAmmo((ItemTurret) block, core); Old way
+                        Item[] bestAmmoList = AutoFillSettings.turretAmmo.get((ItemTurret) block);
+                        Item bestAmmo = null;
+                        for (Item ammo : bestAmmoList)
+                            if (core.items.get(ammo) >= AutoFillSettings.minTurretCoreItems) {
+                                bestAmmo = ammo;
+                                break;
+                            }
+                        if (bestAmmo == null) return;
+                        Vars.player.sendMessage("Chose " + bestAmmo.localizedName + " to fill " + block.localizedName + " at " + b.tile().x + " " + b.tile().y + " with " + b.items.total() + " items inside out of " + b.getMaximumAccepted(null));
+                        request.set(bestAmmo);
+                    } else if (block instanceof UnitFactory) { // Fill unit factory
+                        request.set(getUnitFactoryRequest((UnitFactory.UnitFactoryBuild) b, (UnitFactory) block, core));
+                    } else if (block instanceof Reconstructor) { // Fill unit reconstructor
+                        request.set(getReconstructorRequest((Reconstructor.ReconstructorBuild) b, (Reconstructor) block, core));
+                    } else if (block instanceof GenericCrafter) {
+                        request.set(findRequiredItem(getItemStacks(getItemConsumers(block)), b, core));
+                    }/*else if (b.items) {
+                        request.set(getItemRequest(b, block, core));
+                    }*/
+                });""";
         if (!isCoreAvailable || transferred.get() || request.get() == null || !player.within(core, Vars.buildingRange)) {
             return;
         }
@@ -165,6 +198,23 @@ public class AutoFill {
             Call.requestItem(player, core, request.get(), 999);
         }
         interactTimer.update();
+    }
+
+    private FillableBlockCategory[] getBlocksToFill(Building[] buildings) {
+        return new FillableBlockCategory[]{
+                new FillableBlockCategory("turret", buildings, b -> b.block() instanceof ItemTurret, building ->
+                        new FillableBlock().block(building.block()).itemsIn(getBestAmmoList((ItemTurret) building.block())).building(building)
+                ),
+                new FillableBlockCategory("unit-factory", buildings, b -> b.block() instanceof UnitFactory && ((UnitFactory.UnitFactoryBuild) b).currentPlan > -1, building ->
+                        new FillableBlock().block(building.block()).itemsIn(((UnitFactory) building.block()).plans.get(((UnitFactory.UnitFactoryBuild) building).currentPlan).requirements).building(building)
+                ),
+                new FillableBlockCategory("unit-reconstructor", buildings, b -> b.block() instanceof Reconstructor, building ->
+                        new FillableBlock().block(building.block()).itemsIn(building.block().requirements).building(building)
+                ),
+                new FillableBlockCategory("crafter", buildings, b -> b.block() instanceof GenericCrafter, building ->
+                        new FillableBlock().block(building.block()).itemsIn(getItemStacks(getItemConsumers(building.block()))).building(building)
+                )
+        };
     }
 
     private String getBlockId(Block block) {
@@ -213,18 +263,20 @@ public class AutoFill {
     }
 
     public static Item[] getBestAmmoList(ItemTurret turret) {
-        //        Log.info(turret == null ? "Has turret!" : "No turret...");
+        // Log.info(turret == null ? "Has turret!" : "No turret...");
         ItemDamage[] itemDamages = new ItemDamage[turret.ammoTypes.size];
         AtomicInteger i = new AtomicInteger(0);
         turret.ammoTypes.each((Item item, BulletType ammo) -> {
             if (!(!AutoFillSettings.allowHomingAmmo || ammo.homingPower <= 0f)) return; // Allow homing ammo setting
             if (!(!AutoFillSettings.allowFireAmmo || !ammo.makeFire)) return; // Allow fire ammo setting
             float totalDamage = ammo.damage + ammo.splashDamage;
-            itemDamages[i.get()] = new ItemDamage(item, totalDamage);
-            i.incrementAndGet();
+            if (item != null) {
+                itemDamages[i.get()] = new ItemDamage(item, totalDamage);
+                i.incrementAndGet();
+            }
         });
         Arrays.sort(itemDamages);
-        Item[] ammoListSorted = new Item[turret.ammoTypes.size];
+        Item[] ammoListSorted = new Item[itemDamages.length];
         int index = 0;
         for (ItemDamage itemDamage : itemDamages) ammoListSorted[index++] = itemDamage.ammo;
         return ammoListSorted;
@@ -259,6 +311,15 @@ public class AutoFill {
         return null;
     }
 
+    public Item findRequiredItem(Item[] items, Building build, CoreBlock.CoreBuild core) {
+        for (Item item : items) {
+            if (core.items.get(item) >= 20 && build.acceptStack(item, 20, Vars.player.unit()) >= 1) {
+                return item;
+            }
+        }
+        return null;
+    }
+
     private static class ItemDamage implements Comparable<ItemDamage> {
         public Item ammo;
         public float damage;
@@ -282,6 +343,7 @@ public class AutoFill {
             // this.damage
             // itemDamage.damage
             // return Float.compare(, ); // Again Intellij IDEA
+            if (itemDamage == null) return 0;
             if (this.damage > itemDamage.damage) return 1;
             else if (this.damage == itemDamage.damage) return 0;
             else return -1;
