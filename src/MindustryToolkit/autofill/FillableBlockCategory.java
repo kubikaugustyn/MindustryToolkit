@@ -4,6 +4,7 @@ import arc.func.Boolf;
 import arc.func.Cons;
 import arc.func.Func;
 import arc.struct.Seq;
+import arc.util.Log;
 import mindustry.gen.Building;
 
 public class FillableBlockCategory {
@@ -19,18 +20,34 @@ public class FillableBlockCategory {
         this.blocks(blocks);
     }
 
-    FillableBlockCategory(String name, Building[] buildings, Boolf<Building> check, Func<Building, FillableBlock> toFillableBlock) {
+    FillableBlockCategory(String name, Seq<Building> buildings, Boolf<Building> check, Func<Building, FillableBlock> toFillableBlock) {
         this.name(name);
         Seq<FillableBlock> filtered = new Seq<>();
+        int debugNullBuildingsCount = 0;
         for (Building building : buildings) {
+            if (building == null) {
+                debugNullBuildingsCount++;
+                continue;
+            }
             if (!check.get(building)) continue;
-            filtered.add(toFillableBlock.get(building));
+            FillableBlock block = toFillableBlock.get(building);
+            filtered.add(block);
         }
-        this.blocks(filtered.items);
+        if (debugNullBuildingsCount > 0)
+            Log.info("Something fucked up, we got " + debugNullBuildingsCount + " null buildings");
+        this.blocks(filtered);
     }
 
     public FillableBlockCategory blocks(FillableBlock[] blocks) {
         this.blocks = blocks;
+        return this;
+    }
+
+    public FillableBlockCategory blocks(Seq<FillableBlock> blocks) {
+        FillableBlock[] fillableBlocks=new FillableBlock[blocks.size];
+        int i=0;
+        for (FillableBlock bl : blocks)fillableBlocks[i++]=bl;
+        this.blocks(fillableBlocks);
         return this;
     }
 

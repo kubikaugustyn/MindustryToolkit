@@ -2,7 +2,9 @@ package MindustryToolkit.autofill;
 
 import MindustryToolkit.settings.AutoFillSettings;
 import arc.Events;
+import arc.struct.ObjectMap;
 import arc.struct.Seq;
+import arc.util.Log;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.entities.bullet.BulletType;
@@ -22,14 +24,14 @@ import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitFactory;
 import mindustry.world.consumers.*;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class AutoFill {
+    private final static double Infinity = 1.7E308;
     private final InteractTimer interactTimer = new InteractTimer();
     private static final String[] ignoredBlocks = {// To prevent random conveyor filling etc.
             // Storage
@@ -97,8 +99,8 @@ public class AutoFill {
         // Search Blocks
         Seq<Building> buildingsInRange = new Seq<>(new Building[]{});
         Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()) && building.block.hasConsumers, buildingsInRange::add);
-        if (buildingsInRange.size > 0 && isCoreAvailable) {
-            FillableBlockCategory[] categories = this.getBlocksToFill(buildingsInRange.items);
+        if (buildingsInRange.any() && isCoreAvailable) {
+            FillableBlockCategory[] categories = this.getBlocksToFill(buildingsInRange);
             for (FillableBlockCategory category : categories) {
                 boolean isTurret = Objects.equals(category.name(), "turret");
                 for (FillableBlock block : category.blocks()) {
@@ -200,7 +202,7 @@ public class AutoFill {
         interactTimer.update();
     }
 
-    private FillableBlockCategory[] getBlocksToFill(Building[] buildings) {
+    private FillableBlockCategory[] getBlocksToFill(Seq<Building> buildings) {
         return new FillableBlockCategory[]{
                 new FillableBlockCategory("turret", buildings, b -> b.block() instanceof ItemTurret, building ->
                         new FillableBlock().block(building.block()).itemsIn(getBestAmmoList((ItemTurret) building.block())).building(building)
@@ -265,25 +267,30 @@ public class AutoFill {
     public static Item[] getBestAmmoList(ItemTurret turret) {
         // Log.info(turret == null ? "Has turret!" : "No turret...");
         ItemDamage[] itemDamages = new ItemDamage[turret.ammoTypes.size];
-        AtomicInteger i = new AtomicInteger(0);
-        turret.ammoTypes.each((Item item, BulletType ammo) -> {
-            if (!(!AutoFillSettings.allowHomingAmmo || ammo.homingPower <= 0f)) return; // Allow homing ammo setting
-            if (!(!AutoFillSettings.allowFireAmmo || !ammo.makeFire)) return; // Allow fire ammo setting
+        int i = 0;
+        for (Item item : turret.ammoTypes.keys()) {
+            BulletType ammo = turret.ammoTypes.get(item);
             float totalDamage = ammo.damage + ammo.splashDamage;
-            if (item != null) {
-                itemDamages[i.get()] = new ItemDamage(item, totalDamage);
-                i.incrementAndGet();
-            }
-        });
+            ItemDamage itemDamage = new ItemDamage(item, totalDamage, true);
+            itemDamages[i] = itemDamage;
+            Log.info("Best ammo list for " + turret.localizedName + " at " + i + " is " + (itemDamages[i] == null ? "null" : "defined: " + itemDamages[i].ammo.localizedName));
+            if (!(!AutoFillSettings.allowHomingAmmo || ammo.homingPower <= 0f))
+                itemDamage.allowed = false; // Allow homing ammo setting
+            if (!(!AutoFillSettings.allowFireAmmo || !ammo.makeFire))
+                itemDamage.allowed = false; // Allow fire ammo setting
+            i++;
+        }
         Arrays.sort(itemDamages);
-        Item[] ammoListSorted = new Item[itemDamages.length];
+        int finalLength = 0;
+        for (ItemDamage dmg : itemDamages) if (dmg.allowed) finalLength++;
+        Item[] ammoListSorted = new Item[finalLength];
         int index = 0;
-        for (ItemDamage itemDamage : itemDamages) ammoListSorted[index++] = itemDamage.ammo;
+        for (ItemDamage itemDamage : itemDamages) if (itemDamage.allowed) ammoListSorted[index++] = itemDamage.ammo;
         return ammoListSorted;
-        //        return null;
     }
 
-    public Item getUnitFactoryRequest(UnitFactory.UnitFactoryBuild build, UnitFactory block, CoreBlock.CoreBuild core) {
+    public Item getUnitFactoryRequest(UnitFactory.UnitFactoryBuild build, UnitFactory block, CoreBlock.CoreBuild
+            core) {
         if (build.currentPlan == -1) return null;
 
         ItemStack[] stacks = block.plans.get(build.currentPlan).requirements;
@@ -291,7 +298,8 @@ public class AutoFill {
         return findRequiredItem(stacks, build, core);
     }
 
-    public Item getReconstructorRequest(Reconstructor.ReconstructorBuild build, Reconstructor block, CoreBlock.CoreBuild core) {
+    public Item getReconstructorRequest(Reconstructor.ReconstructorBuild build, Reconstructor
+            block, CoreBlock.CoreBuild core) {
         ItemStack[] stacks = block.requirements;
 
         return findRequiredItem(stacks, build, core);
@@ -313,6 +321,10 @@ public class AutoFill {
 
     public Item findRequiredItem(Item[] items, Building build, CoreBlock.CoreBuild core) {
         for (Item item : items) {
+            if (item == null) {
+                Log.info("Something fucked up, we have null item in findRequiredItem.");
+                continue;
+            }
             if (core.items.get(item) >= 20 && build.acceptStack(item, 20, Vars.player.unit()) >= 1) {
                 return item;
             }
@@ -323,14 +335,20 @@ public class AutoFill {
     private static class ItemDamage implements Comparable<ItemDamage> {
         public Item ammo;
         public float damage;
+        public boolean allowed;
 
         ItemDamage() {
 
         }
 
         ItemDamage(Item ammo, float damage) {
+            this(ammo, damage, true);
+        }
+
+        ItemDamage(Item ammo, float damage, boolean allowed) {
             this.ammo = ammo;
             this.damage = damage;
+            this.allowed = allowed;
         }
 
         @Override
@@ -344,6 +362,7 @@ public class AutoFill {
             // itemDamage.damage
             // return Float.compare(, ); // Again Intellij IDEA
             if (itemDamage == null) return 0;
+            if (!this.allowed) return 1; // Not allowed ammo will automatically be at the end
             if (this.damage > itemDamage.damage) return 1;
             else if (this.damage == itemDamage.damage) return 0;
             else return -1;

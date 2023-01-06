@@ -41,9 +41,10 @@ public class FillableBlock {
     }
 
     public FillableBlock itemsIn(ItemStack[] itemsIn) {
-        Seq<Item> items = new Seq<>();
-        for (ItemStack stack : itemsIn) items.add(stack.item);
-        this.itemsIn = items.items;
+        Item[] items = new Item[itemsIn.length];
+        int i = 0;
+        for (ItemStack stack : itemsIn) items[i] = stack.item;
+        this.itemsIn(items);
         return this;
     }
 
