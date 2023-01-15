@@ -3,12 +3,11 @@ package MindustryToolkit.settings;
 import MindustryToolkit.autofill.AutoFill;
 import arc.struct.ObjectMap;
 import mindustry.content.Blocks;
-import mindustry.content.Items;
 import mindustry.type.Item;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 
 public class AutoFillSettingsDefault {
-    public static boolean enabled = true; // AutoFill enabled
+    public static boolean enabled = false; // AutoFill enabled, false until I get it working
     public static boolean allowHomingAmmo = false; // (Homing) Ammo like silicon in duo can be used
     public static boolean allowFireAmmo = false; // (Burning)  Ammo like coal in scorch can be used
     public static int minTurretCoreItems = 25;

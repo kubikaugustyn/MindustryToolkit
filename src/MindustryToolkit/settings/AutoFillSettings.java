@@ -9,7 +9,7 @@ import mindustry.type.Item;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 
 public class AutoFillSettings {
-    private static final String settingsPrefix = new Settings().getSettingsNamePrefix() + "autofill-";
+    private static final String settingsPrefix = Settings.getSettingsNamePrefix() + "autofill-";
     public static boolean enabled = AutoFillSettingsDefault.enabled;
     public static boolean allowHomingAmmo = AutoFillSettingsDefault.allowHomingAmmo;
     public static boolean allowFireAmmo = AutoFillSettingsDefault.allowFireAmmo;
@@ -24,7 +24,7 @@ public class AutoFillSettings {
 
     public static void readSettings() {
         // enabled = Core.settings.getBool(namePrefix("enabled"), true);
-        enabled = AutoFillDialog.readBoolSetting("autofill.enabled", AutoFillSettingsDefault.enabled);
+        enabled = AutoFillDialog.readBoolSetting("autofill.enabled", /*AutoFillDialog.readBoolSetting(Settings.getText("enabled")) && */AutoFillSettingsDefault.enabled);
         allowHomingAmmo = AutoFillDialog.readBoolSetting("autofill.allow-homing-ammo", AutoFillSettingsDefault.allowHomingAmmo); // It's pain but it's because of the checkPref
         allowFireAmmo = AutoFillDialog.readBoolSetting("autofill.allow-fire-ammo", AutoFillSettingsDefault.allowFireAmmo);
         minTurretCoreItems = AutoFillDialog.readIntSetting("autofill.min-turret-core-items", AutoFillSettingsDefault.minTurretCoreItems);

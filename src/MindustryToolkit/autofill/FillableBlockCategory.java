@@ -7,6 +7,8 @@ import arc.struct.Seq;
 import arc.util.Log;
 import mindustry.gen.Building;
 
+import java.util.Iterator;
+
 public class FillableBlockCategory {
     private FillableBlock[] blocks;
     private String name;
@@ -31,6 +33,10 @@ public class FillableBlockCategory {
             }
             if (!check.get(building)) continue;
             FillableBlock block = toFillableBlock.get(building);
+            if (block == null) {
+                // Log.info("We got null block.");
+                continue;
+            }
             filtered.add(block);
         }
         if (debugNullBuildingsCount > 0)
@@ -44,9 +50,9 @@ public class FillableBlockCategory {
     }
 
     public FillableBlockCategory blocks(Seq<FillableBlock> blocks) {
-        FillableBlock[] fillableBlocks=new FillableBlock[blocks.size];
-        int i=0;
-        for (FillableBlock bl : blocks)fillableBlocks[i++]=bl;
+        FillableBlock[] fillableBlocks = new FillableBlock[blocks.size];
+        int i = 0;
+        for (FillableBlock bl : blocks) fillableBlocks[i++] = bl;
         this.blocks(fillableBlocks);
         return this;
     }

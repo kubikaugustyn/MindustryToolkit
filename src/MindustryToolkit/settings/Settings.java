@@ -21,18 +21,18 @@ public class Settings {
             SettingsMenuDialog.SettingsTable settings = new SettingsMenuDialog.SettingsTable();
             AutoFillDialog autoFillDialog = new AutoFillDialog();
             settings.pref(new ButtonSetting(AutoFillDialog.title, autoFillDialog::show));
-            settings.pref(new ButtonSetting("Save", () -> {
+            /*settings.pref(new ButtonSetting("Save", () -> {
                 showDialog("Save", "Save!");
-            }));
+            }));*/
 
-            settings.checkPref(getText("enabled"), true, e -> this.saveSetting("mindustry-toolkit-kubikaugustyn-enabled", e));
+//            settings.checkPref(getText("enabled"), true, e -> this.saveSetting(getSettingsNamePrefix() + "enabled", e));
 
             settingsTable.add(settings);
         };
         ui.settings.getCategories().add(new SettingsMenuDialog.SettingsCategory(bundle.get("mindustry-toolkit-kubikaugustyn.settings.title"), new TextureRegionDrawable(Core.atlas.find("mindustry-toolkit-kubikaugustyn-logo")), builder));
     }
 
-    public String getSettingsNamePrefix() {
+    public static String getSettingsNamePrefix() {
         return "mindustry-toolkit-kubikaugustyn-";
     }
 

@@ -86,7 +86,8 @@ public class AutoFill {
     }
 
     private void onUpdate() {
-        if (Vars.state.isPaused() || Vars.state.isMenu() || Vars.player.unit().dead()) return;
+        if (Vars.state.isPaused() || Vars.state.isMenu()) return;
+        if (Vars.player.unit().dead() || !Vars.player.unit().canBuild()) return;
         if (!AutoFillSettings.enabled || !interactTimer.canInteract() || Vars.state.isPaused()) return;
         Player player = Vars.player;
         ItemStack stack = player.unit().stack;
@@ -325,7 +326,7 @@ public class AutoFill {
                 Log.info("Something fucked up, we have null item in findRequiredItem.");
                 continue;
             }
-            if (core.items.get(item) >= 20 && build.acceptStack(item, 20, Vars.player.unit()) >= 1) {
+            if (core.items.get(item) >= 20 && build.acceptStack(item, 999, Vars.player.unit()) >= 1) {
                 return item;
             }
         }
