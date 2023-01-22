@@ -9,5 +9,5 @@ rmdir /s /q "C:\Users\Radek Augustyn\Desktop\Kubik\MindustryToolkit\build\"
 rmdir /s /q "C:\Users\Radek Augustyn\Desktop\Kubik\MindustryToolkit\.gradle\"
 echo Cleaned up
 echo Starting...
-start /B /d "C:\KubaPrograms\Mindustry\relase-140.3" Mindustry.exe
+start /B /d "C:\KubaPrograms\Mindustry\relase-141.2" Mindustry.exe
 echo Started

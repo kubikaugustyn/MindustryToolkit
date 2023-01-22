@@ -1,8 +1,10 @@
 package MindustryToolkit.identity;
 
+import MindustryToolkit.settings.Settings;
+import arc.util.Strings;
 import mindustry.Vars;
+import mindustry.core.NetClient;
 import mindustry.net.NetConnection;
-import mindustry.net.Packets;
 
 public class User {
     public String username;
@@ -26,15 +28,13 @@ public class User {
         return this;
     }
 
-    /*public boolean rejoinAs() {
+    public boolean rejoinAs() {
         if (!this.switchTo()) return false;
-        NetConnection con=Vars.player.con();
-        String ip=con.address;
-        int port=???;
-        Vars.net.disconnect();
-        Vars.net.connect(ip, 1,null);
+        // Return false if you're not connected to any server, to prevent errors while Vars.ui.join.reconnect()
+        if (!Vars.net.client()) return false;
+        Vars.ui.join.reconnect();
         return true;
-    }*/
+    }
 
     public boolean switchTo() {
         if (Vars.player.con() == null) return false;
@@ -53,6 +53,10 @@ public class User {
     }
 
     public String uuid() {
+        // To get your Sectorized uuid you do this:
+        // Core.settings.getString("usid-89.58.37.204:6567", "No USID found :-(")
+        // For OmniDustry:
+        // Core.settings.getString("usid-109.94.209.233:6567", "No USID found :-(")
         return this.uuid;
     }
 }
