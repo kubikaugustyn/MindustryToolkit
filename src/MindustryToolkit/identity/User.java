@@ -1,10 +1,6 @@
 package MindustryToolkit.identity;
 
-import MindustryToolkit.settings.Settings;
-import arc.util.Strings;
 import mindustry.Vars;
-import mindustry.core.NetClient;
-import mindustry.net.NetConnection;
 
 public class User {
     public String username;
@@ -58,5 +54,17 @@ public class User {
         // For OmniDustry:
         // Core.settings.getString("usid-109.94.209.233:6567", "No USID found :-(")
         return this.uuid;
+    }
+
+    @Override
+    public String toString() {
+        return "User:" + this.uuid() + ":" + this.username();
+    }
+
+    public static User fromString(String source) {
+        String[] parts = source.split(":");
+        String[] uuidPart = new String[parts.length - 2];
+        System.arraycopy(parts, 2, uuidPart, 0, parts.length - 2);
+        return new User(parts[1], String.join(":", uuidPart));
     }
 }

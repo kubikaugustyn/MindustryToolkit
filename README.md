@@ -1,39 +1,44 @@
-# Mindustry Java Mod Template
-A Java Mindustry mod template that works on Android and PC. The Kotlin version of this mod can be seen [here](https://github.com/Anuken/MindustryKotlinModTemplate).
+# Mindustry Toolkit
 
-## Building for Desktop Testing
+A Java Mindustry mod that consists of multiple parts called 'features' eg. AutoFill, Identity and later others (suggest
+new features ;-D)
 
-1. Install JDK **17**.
-2. Run `gradlew jar` [1].
-3. Your mod jar will be in the `build/libs` directory. **Only use this version for testing on desktop. It will not work with Android.**
-To build an Android-compatible version, you need the Android SDK. You can either let Github Actions handle this, or set it up yourself. See steps below.
+## Settings
 
-## Building through Github Actions
+You can find Mindustry Toolkit settings obviously in the bottom category called 'Mindustry Toolkit'
+![Settings image](settingsIcon.png)
 
-This repository is set up with Github Actions CI to automatically build the mod for you every commit. This requires a Github repository, for obvious reasons.
-To get a jar file that works for every platform, do the following:
-1. Make a Github repository with your mod name, and upload the contents of this repo to it. Perform any modifications necessary, then commit and push. 
-2. Check the "Actions" tab on your repository page. Select the most recent commit in the list. If it completed successfully, there should be a download link under the "Artifacts" section. 
-3. Click the download link (should be the name of your repo). This will download a **zipped jar** - **not** the jar file itself [2]! Unzip this file and import the jar contained within in Mindustry. This version should work both on Android and Desktop.
+## AutoFill
 
-## Building Locally
+Inspired by [this mods](https://github.com/Ferlern/extended-UI-v7) AutoFill.
+But better, with lots of settings, so you can customize ammo filled to turrets and much more.
+I'm planning also feature that will work like processor + container + flare, its contents will be moved to core and / or
+it will be filled from core.
+![AutoFill settings example](autofillSettingsImg.png)
 
-Building locally takes more time to set up, but shouldn't be a problem if you've done Android development before.
-1. Download the Android SDK, unzip it and set the `ANDROID_HOME` environment variable to its location.
-2. Make sure you have API level 30 installed, as well as any recent version of build tools (e.g. 30.0.1)
-3. Add a build-tools folder to your PATH. For MindustryToolkit, if you have `30.0.1` installed, that would be `$ANDROID_HOME/build-tools/30.0.1`.
-4. Run `gradlew deploy`. If you did everything correctlly, this will create a jar file in the `build/libs` directory that can be run on both Android and desktop. 
+## Identity
 
-## Adding Dependencies
+Inspired by Ukrainian player called Igor, who can change his UUID on server, so server thinks he's different user. By
+that way Igor managed to spam [Sectorized](https://github.com/Pointifix/SectorizedPlugin) server's leaderboard with
+Igors.
 
-Please note that all dependencies on Mindustry, Arc or its submodules **must be declared as compileOnly in Gradle**. Never use `implementation` for core Mindustry or Arc dependencies. 
+You can create user 'accounts', quickly switch between them in-game without restarting your client, it will only kick
+you from server and reconnect back, so server can be told different UUID => different player
 
-- `implementation` **places the entire dependency in the jar**, which is, in most mod dependencies, very undesirable. You do not want the entirety of the Mindustry API included with your mod.
-- `compileOnly` means that the dependency is only around at compile time, and not included in the jar.
+Account has 2 parameters
 
-Only use `implementation` if you want to package another Java library *with your mod*, and that library is not present in Mindustry already.
+- Name - Player's name
+- UUID - Player's UUID (the identity server checks)
 
---- 
+If you manage to get somebody's UUID, you can create user with his name and UUID he gave you and pretend to be him, it's
+like stealing somebody's Minecraft account, BUT the UUID is only working on one server, normal user has unique UUID on
+every single server, you can read your UUID for server with this code in console:
 
-*[1]* *On Linux/Mac it's `./gradlew`, but if you're using Linux I assume you know how to run executables properly anyway.*  
-*[2]: Yes, I know this is stupid. It's a Github UI limitation - while the jar itself is uploaded unzipped, there is currently no way to download it as a single file.*
+```javascript
+// To get your Sectorized uuid you do this:
+Core.settings.getString("usid-89.58.37.204:6567", "No USID found :-(")
+// For OmniDustry:
+Core.settings.getString("usid-109.94.209.233:6567", "No USID found :-(")
+// Others:
+Core.settings.getString("usid-<serverIP>:<serverPORT(default:6567)>", "No USID found :-(")
+```

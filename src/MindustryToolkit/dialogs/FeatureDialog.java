@@ -3,7 +3,6 @@ package MindustryToolkit.dialogs;
 import MindustryToolkit.settings.AutoFillSettings;
 import MindustryToolkit.settings.Settings;
 import arc.Core;
-import arc.scene.event.VisibilityEvent;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.SettingsMenuDialog;
 

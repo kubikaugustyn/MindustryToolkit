@@ -1,6 +1,7 @@
 package MindustryToolkit.settings;
 
 import MindustryToolkit.dialogs.AutoFillDialog;
+import MindustryToolkit.dialogs.IdentityDialog;
 import arc.Core;
 import arc.func.Cons;
 import arc.scene.style.TextureRegionDrawable;
@@ -21,6 +22,8 @@ public class Settings {
             SettingsMenuDialog.SettingsTable settings = new SettingsMenuDialog.SettingsTable();
             AutoFillDialog autoFillDialog = new AutoFillDialog();
             settings.pref(new ButtonSetting(AutoFillDialog.title, autoFillDialog::show));
+            IdentityDialog identityDialog = new IdentityDialog();
+            settings.pref(new ButtonSetting(IdentityDialog.title, identityDialog::show));
             /*settings.pref(new ButtonSetting("Save", () -> {
                 showDialog("Save", "Save!");
             }));*/
@@ -42,7 +45,7 @@ public class Settings {
         baseDialog.show(title, message);
     }
 
-    private static class ButtonSetting extends SettingsMenuDialog.SettingsTable.Setting {
+    public static class ButtonSetting extends SettingsMenuDialog.SettingsTable.Setting {
         String name;
         Runnable clicked;
 
@@ -59,8 +62,32 @@ public class Settings {
         }
     }
 
-    private void saveSetting(String name, Object object) {
+    public static void saveSetting(String name, Object object) {
         Core.settings.put(name, object);
+    }
+
+    public static void saveStringSetting(String name, String value) {
+        Settings.saveSetting(name, value);
+    }
+
+    public static void saveBoolSetting(String name, boolean value) {
+        Settings.saveSetting(name, value);
+    }
+
+    public static void saveIntSetting(String name, int value) {
+        Settings.saveSetting(name, value);
+    }
+
+    public static String readStringSetting(String name, String def) {
+        return Core.settings.getString(name, def);
+    }
+
+    public static boolean readBoolSetting(String name, boolean def) {
+        return Core.settings.getBool(name, def);
+    }
+
+    public static int readIntSetting(String name, int def) {
+        return Core.settings.getInt(name, def);
     }
 
     public static String getText(String name) {
