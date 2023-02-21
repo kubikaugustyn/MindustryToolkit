@@ -17,6 +17,7 @@ import mindustry.type.ItemStack;
 import mindustry.world.Block;
 import mindustry.world.Build;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
+import mindustry.world.blocks.logic.MessageBlock;
 import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.blocks.storage.CoreBlock;
 import mindustry.type.Item;

@@ -11,10 +11,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AutoFillDialog extends FeatureDialog {
     public static String title = Settings.getText("autofill.title");
 
-    private AtomicBoolean enabled;
-    private AtomicBoolean allowHomingAmmo;
-    private AtomicBoolean allowFireAmmo;
-    private AtomicInteger minTurretCoreItems;
+    private final AtomicBoolean enabled = new AtomicBoolean(AutoFillSettings.enabled);
+    private final AtomicBoolean allowHomingAmmo = new AtomicBoolean(AutoFillSettings.allowHomingAmmo);
+    private final AtomicBoolean allowFireAmmo = new AtomicBoolean(AutoFillSettings.allowFireAmmo);
+    private final AtomicInteger minTurretCoreItems = new AtomicInteger(AutoFillSettings.minTurretCoreItems);
 
     public AutoFillDialog() {
         super(title);
@@ -23,10 +23,10 @@ public class AutoFillDialog extends FeatureDialog {
                 AutoFillDialog.onClose();
             return false;
         });
-        this.enabled = new AtomicBoolean(AutoFillSettings.enabled);
-        this.allowHomingAmmo = new AtomicBoolean(AutoFillSettings.allowHomingAmmo);
-        this.allowFireAmmo = new AtomicBoolean(AutoFillSettings.allowFireAmmo);
-        this.minTurretCoreItems = new AtomicInteger(AutoFillSettings.minTurretCoreItems);
+        this.enabled.set(AutoFillSettings.enabled);
+        this.allowHomingAmmo.set(AutoFillSettings.allowHomingAmmo);
+        this.allowFireAmmo.set(AutoFillSettings.allowFireAmmo);
+        this.minTurretCoreItems.set(AutoFillSettings.minTurretCoreItems);
         this.main.checkPref(Settings.getText("autofill.enabled"), AutoFillSettings.enabled, this.enabled::set);
         this.main.add(new Label(Settings.getText("autofill.ammo-category"))).row();
         this.main.checkPref(Settings.getText("autofill.allow-homing-ammo"), AutoFillSettings.allowHomingAmmo, this.allowHomingAmmo::set);
