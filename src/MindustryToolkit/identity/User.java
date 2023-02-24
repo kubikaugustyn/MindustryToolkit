@@ -1,6 +1,7 @@
 package MindustryToolkit.identity;
 
 import mindustry.Vars;
+import mindustry.logic.LExecutor;
 
 public class User {
     public String username;
@@ -24,10 +25,14 @@ public class User {
         return this;
     }
 
+    public boolean blank() {
+        return this.username() != null && this.uuid() != null;
+    }
+
     public boolean rejoinAs() {
         if (!this.switchTo()) return false;
         // Return false if you're not connected to any server, to prevent errors while Vars.ui.join.reconnect()
-        if (!Vars.net.client()) return false;
+        if (!Vars.net.client() || !Vars.net.active()) return false;
         Vars.ui.join.reconnect();
         return true;
     }
@@ -35,6 +40,7 @@ public class User {
     public boolean switchTo() {
         if (Vars.player.con() == null) return false;
         Vars.player.name(this.username());
+//        Vars.net.;
         Vars.player.con().uuid = this.uuid();
         return true;
     }
@@ -63,8 +69,6 @@ public class User {
 
     public static User fromString(String source) {
         String[] parts = source.split(":");
-        String[] uuidPart = new String[parts.length - 2];
-        System.arraycopy(parts, 2, uuidPart, 0, parts.length - 2);
-        return new User(parts[1], String.join(":", uuidPart));
+        return new User(parts[2], parts[1]);
     }
 }

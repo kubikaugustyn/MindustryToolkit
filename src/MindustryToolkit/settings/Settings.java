@@ -1,6 +1,7 @@
 package MindustryToolkit.settings;
 
 import MindustryToolkit.dialogs.AutoFillDialog;
+import MindustryToolkit.dialogs.FeatureDialog;
 import MindustryToolkit.dialogs.IdentityDialog;
 import arc.Core;
 import arc.func.Cons;
@@ -21,9 +22,9 @@ public class Settings {
         Cons<SettingsMenuDialog.SettingsTable> builder = settingsTable -> {
             SettingsMenuDialog.SettingsTable settings = new SettingsMenuDialog.SettingsTable();
             AutoFillDialog autoFillDialog = new AutoFillDialog();
-            settings.pref(new ButtonSetting(AutoFillDialog.title, autoFillDialog::show));
+            settings.pref(new FeatureDialog.ButtonSetting(AutoFillDialog.title, autoFillDialog::show));
             IdentityDialog identityDialog = new IdentityDialog();
-            settings.pref(new ButtonSetting(IdentityDialog.title, identityDialog::show));
+            settings.pref(new FeatureDialog.ButtonSetting(IdentityDialog.title, identityDialog::show));
             /*settings.pref(new ButtonSetting("Save", () -> {
                 showDialog("Save", "Save!");
             }));*/
@@ -43,23 +44,6 @@ public class Settings {
         FullTextDialog baseDialog = new FullTextDialog();
 
         baseDialog.show(title, message);
-    }
-
-    public static class ButtonSetting extends SettingsMenuDialog.SettingsTable.Setting {
-        String name;
-        Runnable clicked;
-
-        public ButtonSetting(String name, Runnable clicked) {
-            super(name);
-            this.name = name;
-            this.clicked = clicked;
-        }
-
-        @Override
-        public void add(SettingsMenuDialog.SettingsTable table) {
-            table.button(name, clicked).margin(14).width(240f).pad(6);
-            table.row();
-        }
     }
 
     public static void saveSetting(String name, Object object) {

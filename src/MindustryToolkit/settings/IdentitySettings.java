@@ -1,17 +1,13 @@
 package MindustryToolkit.settings;
 
-import MindustryToolkit.dialogs.AutoFillDialog;
-import MindustryToolkit.dialogs.IdentityDialog;
 import MindustryToolkit.identity.Users;
-import arc.struct.ObjectMap;
 import arc.util.Log;
-import mindustry.type.Item;
-import mindustry.world.blocks.defense.turrets.ItemTurret;
 
 public class IdentitySettings {
     private static final String settingsPrefix = Settings.getSettingsNamePrefix() + "identity-";
     public static boolean enabled = IdentitySettingsDefault.enabled;
     public static Users users = IdentitySettingsDefault.users;
+    public static String quickKey=IdentitySettingsDefault.quickKey;
 
     public static void init() {
         // This method must be called only once!

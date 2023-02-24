@@ -62,6 +62,13 @@ public class Users {
     }
 
     public static Users fromString(String source) {
-        return Users.blank;
+        source = source.substring(1, source.length() - 2);
+        String[] userStrings = source.split(",");
+        User[] users = new User[userStrings.length];
+        for (int i = 0; i < userStrings.length; i++) {
+            String userString = userStrings[i];
+            users[i] = User.fromString(userString.substring(1, userString.length() - 2).replaceAll("\\\"", "\""));
+        }
+        return new Users(users);
     }
 }

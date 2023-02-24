@@ -23,19 +23,22 @@ public class AutoFillDialog extends FeatureDialog {
                 AutoFillDialog.onClose();
             return false;
         });
+    }
+
+    public void rebuild() {
         this.enabled.set(AutoFillSettings.enabled);
         this.allowHomingAmmo.set(AutoFillSettings.allowHomingAmmo);
         this.allowFireAmmo.set(AutoFillSettings.allowFireAmmo);
         this.minTurretCoreItems.set(AutoFillSettings.minTurretCoreItems);
         this.main.checkPref(Settings.getText("autofill.enabled"), AutoFillSettings.enabled, this.enabled::set);
-        this.main.add(new Label(Settings.getText("autofill.ammo-category"))).row();
+        this.main.pref(new DescriptionSetting(Settings.getText("autofill.ammo-category")));
         this.main.checkPref(Settings.getText("autofill.allow-homing-ammo"), AutoFillSettings.allowHomingAmmo, this.allowHomingAmmo::set);
         this.main.checkPref(Settings.getText("autofill.allow-fire-ammo"), AutoFillSettings.allowFireAmmo, this.allowFireAmmo::set);
         this.main.sliderPref(Settings.getText("autofill.min-turret-core-items"), AutoFillSettings.minTurretCoreItems, 0, 500, 10, i -> {
             this.minTurretCoreItems.set(i);
             return i + "";
         });
-        this.main.pref(new Settings.ButtonSetting(Settings.getText("save"), this::onSaveClick));
+        this.main.pref(new ButtonSetting(Settings.getText("save"), this::onSaveClick));
     }
 
     private void onSaveClick() {
