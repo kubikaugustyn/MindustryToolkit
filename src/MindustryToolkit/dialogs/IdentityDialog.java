@@ -49,9 +49,9 @@ public class IdentityDialog extends FeatureDialog {
             TextField uuid = new TextField();
             uuids[i] = uuid;
             uuid.setMaxLength(100);
-            uuid.update(() -> uuid.setText(user.uuid()));
+            uuid.update(() -> uuid.setText(user.usid()));
             uuid.changed(() -> {
-                if (!uuid.getText().contains(":")) user.uuid(uuid.getText());
+                if (!uuid.getText().contains(":")) user.usid(uuid.getText());
             });
             editTable.add(uuid);
             editTable.button(Icon.trash, Styles.emptyi, () -> {
@@ -78,7 +78,7 @@ public class IdentityDialog extends FeatureDialog {
         for (int i = 0; i < usersNum; i++) {
             User user = IdentitySettings.users.users()[i];
             user.username(this.users.userNames[i].getText());
-            user.uuid(this.users.uuids[i].getText());
+            user.usid(this.users.uuids[i].getText());
         }
         IdentitySettings.saveSettings();
     }

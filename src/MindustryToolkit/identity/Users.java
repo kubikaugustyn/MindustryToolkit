@@ -1,9 +1,21 @@
 package MindustryToolkit.identity;
 
+import MindustryToolkit.Utils;
+import arc.Core;
+import arc.func.Cons;
+import arc.net.Connection;
+import arc.net.NetListener;
+import arc.util.Log;
 import arc.util.Strings;
+import mindustry.ClientLauncher;
+import mindustry.Vars;
+import mindustry.core.Version;
+import mindustry.net.Packet;
+import mindustry.net.Packets;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class Users {
@@ -12,6 +24,8 @@ public class Users {
 
     public Users(User[] users) {
         this.users = users;
+
+        Vars.platform.getNet();
     }
 
     public User[] users() {
@@ -56,18 +70,23 @@ public class Users {
         User[] users = this.users();
         String[] userStrings = new String[users.length];
         for (int i = 0; i < users.length; i++) {
-            userStrings[i] = '"' + users[i].toString().replaceAll("\"", "\\\"") + '"'; // We replace " with \" and surround it with " like: "<User>"
+            String userString = users[i].toString();
+            userString = userString.replaceAll("\"", "\\\""); // We replace " with \"
+            userString = userString.replaceAll(",", "\\,"); // We replace , with \,
+            userStrings[i] = '"' + userString + '"'; // Surround it with " like: "<User>"
         }
         return '[' + String.join(",", userStrings) + ']';
     }
 
     public static Users fromString(String source) {
-        source = source.substring(1, source.length() - 2);
-        String[] userStrings = source.split(",");
+        source = source.substring(2, source.length() - 2);
+        String[] userStrings = source.split("\",\"");
+        // String[] userStrings = Utils.advancedSplit(source, "\",\"", "\\,\""); Not working function
         User[] users = new User[userStrings.length];
         for (int i = 0; i < userStrings.length; i++) {
             String userString = userStrings[i];
-            users[i] = User.fromString(userString.substring(1, userString.length() - 2).replaceAll("\\\"", "\""));
+            userString = userString.replaceAll("\\\"", "\"");
+            users[i] = User.fromString(userString);
         }
         return new Users(users);
     }

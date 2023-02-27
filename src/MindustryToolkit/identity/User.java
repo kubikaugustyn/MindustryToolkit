@@ -1,11 +1,13 @@
 package MindustryToolkit.identity;
 
+import arc.Core;
 import mindustry.Vars;
-import mindustry.logic.LExecutor;
+import mindustry.core.NetClient;
 
 public class User {
     public String username;
-    public String uuid;
+    public String usid;
+    public String addressTCP;
 
     public User() {
         this("Player");
@@ -15,9 +17,9 @@ public class User {
         this(username, "666");
     }
 
-    public User(String username, String uuid) {
+    public User(String username, String usid) {
         this.username(username);
-        this.uuid(uuid);
+        this.usid(usid);
     }
 
     public User username(String username) {
@@ -26,7 +28,7 @@ public class User {
     }
 
     public boolean blank() {
-        return this.username() != null && this.uuid() != null;
+        return this.username() != null && this.usid() != null;
     }
 
     public boolean rejoinAs() {
@@ -38,15 +40,28 @@ public class User {
     }
 
     public boolean switchTo() {
-        if (Vars.player.con() == null) return false;
+        // if (Vars.player.con() == null) return false;
         Vars.player.name(this.username());
-//        Vars.net.;
-        Vars.player.con().uuid = this.uuid();
+//        this.setUsid(Vars.netClient);
+        Vars.netClient = new NetClient();
         return true;
     }
 
-    public User uuid(String uuid) {
-        this.uuid = uuid;
+    public void setUsid(String ip) {
+        if (ip.contains("/")) {
+            ip = ip.substring(ip.indexOf("/") + 1);
+        }
+
+        Core.settings.put("usid-" + ip, this.usid());
+    }
+
+    public User usid(String usid) {
+        this.usid = usid;
+        return this;
+    }
+
+    public User addressTCP(String addressTCP) {
+        this.addressTCP = addressTCP;
         return this;
     }
 
@@ -54,21 +69,31 @@ public class User {
         return this.username;
     }
 
-    public String uuid() {
+    public String usid() {
         // To get your Sectorized uuid you do this:
         // Core.settings.getString("usid-89.58.37.204:6567", "No USID found :-(")
         // For OmniDustry:
         // Core.settings.getString("usid-109.94.209.233:6567", "No USID found :-(")
-        return this.uuid;
+        return this.usid;
+    }
+
+    public String addressTCP() {
+        return this.addressTCP;
     }
 
     @Override
     public String toString() {
-        return "User:" + this.uuid() + ":" + this.username();
+        return "User:" + this.usid() + ":" + this.username();
     }
 
     public static User fromString(String source) {
         String[] parts = source.split(":");
-        return new User(parts[2], parts[1]);
+        // Ehm IDEA whatever
+        // Basically to prevent java.lang.ArrayIndexOutOfBoundsException
+        return switch (parts.length) {
+            case 2 -> new User(null, parts[1]);
+            case 3 -> new User(parts[2], parts[1]);
+            default -> new User();
+        };
     }
 }
