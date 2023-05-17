@@ -7,7 +7,7 @@ public class IdentitySettings {
     private static final String settingsPrefix = Settings.getSettingsNamePrefix() + "identity-";
     public static boolean enabled = IdentitySettingsDefault.enabled;
     public static Users users = IdentitySettingsDefault.users;
-    public static String quickKey=IdentitySettingsDefault.quickKey;
+    public static String quickKey = IdentitySettingsDefault.quickKey;
 
     public static void init() {
         // This method must be called only once!

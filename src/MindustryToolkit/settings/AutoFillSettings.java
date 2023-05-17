@@ -1,11 +1,7 @@
 package MindustryToolkit.settings;
 
-import MindustryToolkit.dialogs.AutoFillDialog;
-import arc.Core;
 import arc.struct.ObjectMap;
 import arc.util.Log;
-import mindustry.content.Blocks;
-import mindustry.content.Items;
 import mindustry.type.Item;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 

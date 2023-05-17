@@ -79,6 +79,7 @@ public class Users {
     }
 
     public static Users fromString(String source) {
+        // Log.info("Parsing users of: " + source);
         source = source.substring(2, source.length() - 2);
         String[] userStrings = source.split("\",\"");
         // String[] userStrings = Utils.advancedSplit(source, "\",\"", "\\,\""); Not working function

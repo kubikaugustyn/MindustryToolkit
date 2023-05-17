@@ -3,7 +3,6 @@ package MindustryToolkit.dialogs;
 import MindustryToolkit.settings.AutoFillSettings;
 import MindustryToolkit.settings.Settings;
 import arc.scene.event.VisibilityEvent;
-import arc.scene.ui.Label;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

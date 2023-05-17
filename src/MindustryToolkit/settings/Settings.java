@@ -1,6 +1,7 @@
 package MindustryToolkit.settings;
 
 import MindustryToolkit.dialogs.AutoFillDialog;
+import MindustryToolkit.dialogs.SectorizedDialog;
 import MindustryToolkit.dialogs.FeatureDialog;
 import MindustryToolkit.dialogs.IdentityDialog;
 import arc.Core;
@@ -25,6 +26,8 @@ public class Settings {
             settings.pref(new FeatureDialog.ButtonSetting(AutoFillDialog.title, autoFillDialog::show));
             IdentityDialog identityDialog = new IdentityDialog();
             settings.pref(new FeatureDialog.ButtonSetting(IdentityDialog.title, identityDialog::show));
+            SectorizedDialog sectorizedDialog = new SectorizedDialog();
+            settings.pref(new FeatureDialog.ButtonSetting(SectorizedDialog.title, sectorizedDialog::show));
             /*settings.pref(new ButtonSetting("Save", () -> {
                 showDialog("Save", "Save!");
             }));*/
@@ -33,7 +36,7 @@ public class Settings {
 
             settingsTable.add(settings);
         };
-        ui.settings.getCategories().add(new SettingsMenuDialog.SettingsCategory(bundle.get("mindustry-toolkit-kubikaugustyn.settings.title"), new TextureRegionDrawable(Core.atlas.find("mindustry-toolkit-kubikaugustyn-logo")), builder));
+        ui.settings.getCategories().add(new SettingsMenuDialog.SettingsCategory(Settings.getText("title"), new TextureRegionDrawable(Core.atlas.find("mindustry-toolkit-kubikaugustyn-logo")), builder));
     }
 
     public static String getSettingsNamePrefix() {

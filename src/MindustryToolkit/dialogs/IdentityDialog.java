@@ -6,6 +6,7 @@ import MindustryToolkit.settings.Settings;
 import arc.scene.event.VisibilityEvent;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
+import arc.util.serialization.Base64Coder;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
@@ -17,6 +18,17 @@ public class IdentityDialog extends FeatureDialog {
 
     private final AtomicBoolean enabled = new AtomicBoolean(IdentitySettings.enabled);
     private UserInputs users = new UserInputs();
+    private final TextField.TextFieldValidator usidValidator = (String text) -> {
+        if (text.contains(":")) return false;
+        try {
+            byte[] bytes = Base64Coder.decode(text);
+            if (bytes.length != 8) return false;
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    };
+    private final TextField.TextFieldValidator uuidValidator = usidValidator;
 
     public IdentityDialog() {
         super(title);
@@ -33,7 +45,7 @@ public class IdentityDialog extends FeatureDialog {
         this.main.pref(new DescriptionSetting(Settings.getText("identity.users-category")));
         this.main.pref(new DividerSetting());
         int usersNum = IdentitySettings.users.users().length;
-        TextField[] userNames = new TextField[usersNum], uuids = new TextField[usersNum];
+        TextField[] userNames = new TextField[usersNum], usids = new TextField[usersNum], uuids = new TextField[usersNum];
         for (int i = 0; i < usersNum; i++) {
             User user = IdentitySettings.users.users()[i];
             Table editTable = new Table();
@@ -46,12 +58,22 @@ public class IdentityDialog extends FeatureDialog {
                 if (!userName.getText().contains(":")) user.username(userName.getText());
             });
             editTable.add(userName);
+            TextField usid = new TextField();
+            usids[i] = usid;
+            usid.setValidator(usidValidator);
+            usid.setMaxLength(100);
+            usid.setText(user.usidStr());
+            usid.changed(() -> {
+                if (usid.isValid()) user.usid(usid.getText());
+            });
+            editTable.add(usid);
             TextField uuid = new TextField();
             uuids[i] = uuid;
+            uuid.setValidator(uuidValidator);
             uuid.setMaxLength(100);
-            uuid.update(() -> uuid.setText(user.usid()));
+            uuid.setText(user.uuidStr());
             uuid.changed(() -> {
-                if (!uuid.getText().contains(":")) user.usid(uuid.getText());
+                if (uuid.isValid()) user.uuid(uuid.getText());
             });
             editTable.add(uuid);
             editTable.button(Icon.trash, Styles.emptyi, () -> {
@@ -62,7 +84,7 @@ public class IdentityDialog extends FeatureDialog {
             editTable.pack();
             this.main.pref(new ElementSetting<>(editTable));
         }
-        this.users = new UserInputs(userNames, uuids);
+        this.users = new UserInputs(userNames, usids, uuids);
         this.main.pref(new ElementSetting<>(this.main.button(Icon.add, Styles.emptyi, () -> {
             User[] users = IdentitySettings.users.users();
             if (users.length == 0 || users[users.length - 1].blank()) IdentitySettings.users.addUser(new User());
@@ -76,9 +98,16 @@ public class IdentityDialog extends FeatureDialog {
         IdentitySettings.enabled = this.enabled.get();
         int usersNum = IdentitySettings.users.users().length;
         for (int i = 0; i < usersNum; i++) {
+            if (!this.users.usids[i].isValid() || !this.users.uuids[i].isValid()) {
+                Vars.ui.showInfo(Settings.getText("identity.invalid-user-info"));
+                return;
+            }
+        }
+        for (int i = 0; i < usersNum; i++) {
             User user = IdentitySettings.users.users()[i];
             user.username(this.users.userNames[i].getText());
-            user.usid(this.users.uuids[i].getText());
+            user.usid(this.users.usids[i].getText());
+            user.uuid(this.users.uuids[i].getText());
         }
         IdentitySettings.saveSettings();
     }
@@ -89,13 +118,15 @@ public class IdentityDialog extends FeatureDialog {
 
     private static class UserInputs {
         public TextField[] userNames;
+        public TextField[] usids;
         public TextField[] uuids;
 
         public UserInputs() {
         }
 
-        public UserInputs(TextField[] userNames, TextField[] uuids) {
+        public UserInputs(TextField[] userNames, TextField[] usids, TextField[] uuids) {
             this.userNames = userNames;
+            this.usids = usids;
             this.uuids = uuids;
         }
     }
