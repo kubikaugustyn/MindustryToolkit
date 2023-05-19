@@ -50,6 +50,10 @@ public class FeatureDialog extends BaseDialog {
             this.desc = desc;
         }
 
+        public void setDesc(String desc) {
+            this.desc = desc;
+        }
+
         @Override
         public void add(SettingsMenuDialog.SettingsTable table) {
             table.labelWrap(this.desc).fillX().center().get().setWrap(true);

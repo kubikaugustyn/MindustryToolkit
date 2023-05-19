@@ -18,6 +18,7 @@ public class IdentityServerDialog extends BaseDialog {
 
     public Dialog show() {
         this.cont.clearChildren();
+        this.buttons.clearChildren();
         this.rebuild();
         return super.show();
     }

@@ -38,6 +38,11 @@ public class User {
         return this;
     }
 
+    public void setUsername() {
+        Core.settings.put("name", this.username());
+        Vars.player.name(this.username());
+    }
+
     public boolean blank() {
         return this.username() != null && this.usid() != null;
     }
@@ -46,13 +51,14 @@ public class User {
         // Return false if you're not connected to any server, to prevent errors while Vars.ui.join.reconnect()
         if (!Vars.net.client() || !Vars.net.active()) return false;
         if (!this.switchTo()) return false;
+        Vars.netClient.disconnectQuietly();
         Vars.ui.join.reconnect();
         return true;
     }
 
     public boolean switchTo() {
         // if (Vars.player.con() == null) return false;
-        Vars.player.name(this.username());
+        // Vars.player.name(this.username());
         try {
             /*Field providerField = Net.class.getDeclaredField("provider");
             providerField.setAccessible(true);
@@ -77,6 +83,7 @@ public class User {
 
             this.setUsid(ip + ":" + port);
             this.setUuid();
+            this.setUsername();
             return true;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();

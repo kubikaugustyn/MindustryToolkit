@@ -3,14 +3,20 @@ package MindustryToolkit.dialogs;
 import MindustryToolkit.identity.User;
 import MindustryToolkit.settings.IdentitySettings;
 import MindustryToolkit.settings.Settings;
+import arc.Core;
+import arc.math.Rand;
 import arc.scene.event.VisibilityEvent;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
+import arc.util.Log;
+import arc.util.Time;
 import arc.util.serialization.Base64Coder;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IdentityDialog extends FeatureDialog {
@@ -29,6 +35,9 @@ public class IdentityDialog extends FeatureDialog {
         return true;
     };
     private final TextField.TextFieldValidator uuidValidator = usidValidator;
+    private final FatTextField serverIP = new FatTextField();
+    private final DescriptionSetting serverUSID = new DescriptionSetting("");
+    private int serverUSIDI = 0;
 
     public IdentityDialog() {
         super(title);
@@ -50,7 +59,8 @@ public class IdentityDialog extends FeatureDialog {
             User user = IdentitySettings.users.users()[i];
             Table editTable = new Table();
             editTable.center();
-            TextField userName = new TextField();
+            FatTextField userName = new FatTextField();
+            userName.setPrefWidth(Vars.maxNameLength * 20f);
             userNames[i] = userName;
             userName.setMaxLength(Vars.maxNameLength);
             userName.update(() -> userName.setText(user.username()));
@@ -58,7 +68,8 @@ public class IdentityDialog extends FeatureDialog {
                 if (!userName.getText().contains(":")) user.username(userName.getText());
             });
             editTable.add(userName);
-            TextField usid = new TextField();
+            FatTextField usid = new FatTextField();
+            usid.setPrefWidth(300f);
             usids[i] = usid;
             usid.setValidator(usidValidator);
             usid.setMaxLength(100);
@@ -67,7 +78,8 @@ public class IdentityDialog extends FeatureDialog {
                 if (usid.isValid()) user.usid(usid.getText());
             });
             editTable.add(usid);
-            TextField uuid = new TextField();
+            FatTextField uuid = new FatTextField();
+            uuid.setPrefWidth(300f);
             uuids[i] = uuid;
             uuid.setValidator(uuidValidator);
             uuid.setMaxLength(100);
@@ -90,6 +102,33 @@ public class IdentityDialog extends FeatureDialog {
             if (users.length == 0 || users[users.length - 1].blank()) IdentitySettings.users.addUser(new User());
             this.show();
         }).get()));
+        this.main.pref(new DividerSetting());
+        this.main.pref(new DescriptionSetting(Settings.getText("identity.server-category")));
+        serverIP.setPrefWidth(400f);
+        serverIP.changed(() -> {
+            int currI = ++serverUSIDI;
+            Time.runTask(60.0F, () -> {
+                if (currI < serverUSIDI) return; // Delays the IP search by 1 second
+                serverUSID.setDesc(Settings.getText("identity.server-usid.loading"));
+                try {
+                    if (!serverIP.getText().trim().isEmpty()) {
+                        String ip = serverIP.getText().trim();
+                        if (ip.contains("/")) {
+                            ip = ip.substring(ip.indexOf("/") + 1);
+                        }
+                        InetAddress address = InetAddress.getByName(ip);
+                        ip = address.toString();
+
+                        serverUSID.setDesc(Settings.getText("identity.server-usid") + " " + Core.settings.getString("usid-" + ip, ""));
+                    }
+                } catch (UnknownHostException ignored) {
+
+                }
+            });
+        });
+        this.main.pref(new ElementSetting<>(serverIP));
+        serverUSID.setDesc(Settings.getText("identity.server-usid.blank"));
+        this.main.pref(serverUSID);
         this.main.pref(new DividerSetting());
         this.main.pref(new ButtonSetting(Settings.getText("save"), this::onSaveClick));
     }
@@ -128,6 +167,18 @@ public class IdentityDialog extends FeatureDialog {
             this.userNames = userNames;
             this.usids = usids;
             this.uuids = uuids;
+        }
+    }
+
+    private static class FatTextField extends TextField {
+        private float prefWidth = 150f;
+
+        public float getPrefWidth() {
+            return this.prefWidth;
+        }
+
+        public void setPrefWidth(float prefWidth) {
+            this.prefWidth = prefWidth;
         }
     }
 }
