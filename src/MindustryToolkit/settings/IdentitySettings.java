@@ -31,6 +31,16 @@ public class IdentitySettings {
         Settings.saveStringSetting(IdentitySettings.namePrefix("originalUUID"), IdentitySettings.originalUUID);
     }
 
+    public static void saveOriginalUsid(String usid, String ip) {
+        if (Settings.readStringSetting(IdentitySettings.namePrefix("originalUSID-" + ip), null) != null)
+            return;
+        Settings.saveStringSetting(IdentitySettings.namePrefix("originalUSID-" + ip), usid);
+    }
+
+    public static String readOriginalUsid(String ip) {
+        return Settings.readStringSetting(IdentitySettings.namePrefix("originalUSID-" + ip),null);
+    }
+
     private static String namePrefix(String name) {
         return settingsPrefix + name;
     }

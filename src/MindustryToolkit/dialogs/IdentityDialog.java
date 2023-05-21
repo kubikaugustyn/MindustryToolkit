@@ -5,6 +5,7 @@ import MindustryToolkit.settings.IdentitySettings;
 import MindustryToolkit.settings.Settings;
 import arc.Core;
 import arc.math.Rand;
+import arc.scene.event.ChangeListener;
 import arc.scene.event.VisibilityEvent;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
@@ -36,7 +37,7 @@ public class IdentityDialog extends FeatureDialog {
     };
     private final TextField.TextFieldValidator uuidValidator = usidValidator;
     private final FatTextField serverIP = new FatTextField();
-    private final DescriptionSetting serverUSID = new DescriptionSetting("");
+    private final FatTextField serverUSID = new FatTextField();
     private int serverUSIDI = 0;
 
     public IdentityDialog() {
@@ -105,30 +106,40 @@ public class IdentityDialog extends FeatureDialog {
         this.main.pref(new DividerSetting());
         this.main.pref(new DescriptionSetting(Settings.getText("identity.server-category")));
         serverIP.setPrefWidth(400f);
+        serverIP.getListeners().removeAll(eventListener -> eventListener instanceof ChangeListener);
         serverIP.changed(() -> {
+            if (serverIP.getText().trim().isEmpty()) {
+                serverUSID.setText(Settings.getText("identity.server-usid.blank"));
+                return;
+            }
             int currI = ++serverUSIDI;
             Time.runTask(60.0F, () -> {
+                Log.info("State: " + (currI < serverUSIDI ? "no" : "searching"));
                 if (currI < serverUSIDI) return; // Delays the IP search by 1 second
-                serverUSID.setDesc(Settings.getText("identity.server-usid.loading"));
+                serverUSID.setText(Settings.getText("identity.server-usid.loading"));
                 try {
-                    if (!serverIP.getText().trim().isEmpty()) {
-                        String ip = serverIP.getText().trim();
-                        if (ip.contains("/")) {
-                            ip = ip.substring(ip.indexOf("/") + 1);
-                        }
-                        InetAddress address = InetAddress.getByName(ip);
-                        ip = address.toString();
-
-                        serverUSID.setDesc(Settings.getText("identity.server-usid") + " " + Core.settings.getString("usid-" + ip, ""));
+                    String ip = serverIP.getText().trim();
+                    int port = 6567;
+                    if (ip.contains(":")) {
+                        port = Integer.parseInt(ip.substring(ip.indexOf(":") + 1));
+                        ip = ip.substring(0, ip.indexOf(":"));
                     }
-                } catch (UnknownHostException ignored) {
+                    InetAddress address = InetAddress.getByName(ip);
+                    ip = address.toString();
+                    if (ip.contains("/")) {
+                        ip = ip.substring(ip.indexOf("/") + 1);
+                    }
 
+                    serverUSID.setText(Core.settings.getString("usid-" + ip + ":" + port, "<NONE>"));
+                } catch (UnknownHostException | NumberFormatException ignored) {
+                    serverUSID.setText(Settings.getText("identity.server-usid.failed"));
                 }
             });
         });
         this.main.pref(new ElementSetting<>(serverIP));
-        serverUSID.setDesc(Settings.getText("identity.server-usid.blank"));
-        this.main.pref(serverUSID);
+        serverUSID.setText(Settings.getText("identity.server-usid.blank"));
+        serverUSID.setPrefWidth(300f);
+        this.main.pref(new ElementSetting<>(serverUSID));
         this.main.pref(new DividerSetting());
         this.main.pref(new ButtonSetting(Settings.getText("save"), this::onSaveClick));
     }

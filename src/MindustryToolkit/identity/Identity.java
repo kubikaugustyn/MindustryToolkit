@@ -31,7 +31,7 @@ public class Identity {
                         !ui.content.isShown() &&
                         Vars.net.active()) {
                     Log.info("Key event: " + keyCode.value);
-                    if (IdentitySettings.quickKey.equalsIgnoreCase(keyCode.value)) {
+                    if (IdentitySettings.enabled && IdentitySettings.quickKey.equalsIgnoreCase(keyCode.value)) {
                         identityServerDialog.show();
                     }
                 }

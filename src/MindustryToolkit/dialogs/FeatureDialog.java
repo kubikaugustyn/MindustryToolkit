@@ -44,6 +44,7 @@ public class FeatureDialog extends BaseDialog {
     // Sorry Pointifix#4403 for stealing your classes :-D
     public static class DescriptionSetting extends SettingsMenuDialog.SettingsTable.Setting {
         String desc;
+        boolean doRow = true;
 
         public DescriptionSetting(String desc) {
             super(null);
@@ -54,10 +55,14 @@ public class FeatureDialog extends BaseDialog {
             this.desc = desc;
         }
 
+        public void doRow(boolean doRow) {
+            this.doRow = doRow;
+        }
+
         @Override
         public void add(SettingsMenuDialog.SettingsTable table) {
             table.labelWrap(this.desc).fillX().center().get().setWrap(true);
-            table.row();
+            if (doRow) table.row();
         }
     }
 

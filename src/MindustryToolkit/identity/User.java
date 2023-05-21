@@ -1,5 +1,6 @@
 package MindustryToolkit.identity;
 
+import MindustryToolkit.settings.IdentitySettings;
 import arc.Core;
 import arc.math.Rand;
 import arc.util.Log;
@@ -39,6 +40,7 @@ public class User {
     }
 
     public void setUsername() {
+        if (this.username() == null || this.username.trim().isEmpty()) return;
         Core.settings.put("name", this.username());
         Vars.player.name(this.username());
     }
@@ -72,16 +74,11 @@ public class User {
             addressField.setAccessible(true);
             InetAddress address = (InetAddress) addressField.get(client);
             String ip = address.toString();*/
-            Field ipField = JoinDialog.class.getDeclaredField("lastIp");
-            ipField.setAccessible(true);
-            String ip = (String) ipField.get(Vars.ui.join);
-            Field portField = JoinDialog.class.getDeclaredField("lastPort");
-            portField.setAccessible(true);
-            int port = (int) portField.get(Vars.ui.join);
+            String ip = User.getCurrentServerIp();
 
             Log.info("Reconnect as " + this.username() + " with USID " + this.usidStr() + " and UUID " + this.uuidStr());
 
-            this.setUsid(ip + ":" + port);
+            this.setUsid(ip);
             this.setUuid();
             this.setUsername();
             return true;
@@ -91,13 +88,25 @@ public class User {
         }
     }
 
+    public static String getCurrentServerIp() throws NoSuchFieldException, IllegalAccessException {
+        Field ipField = JoinDialog.class.getDeclaredField("lastIp");
+        ipField.setAccessible(true);
+        String ip = (String) ipField.get(Vars.ui.join);
+        Field portField = JoinDialog.class.getDeclaredField("lastPort");
+        portField.setAccessible(true);
+        int port = (int) portField.get(Vars.ui.join);
+        return ip + ":" + port;
+    }
+
     public void setUsid(String ip) {
+        if (this.usid() == null) return;
         if (ip.contains("/")) {
             ip = ip.substring(ip.indexOf("/") + 1);
         }
 
         // Core.settings.put("usid-" + ip, this.usid());
         String result = new String(Base64Coder.encode(this.usid()));
+        IdentitySettings.saveOriginalUsid(result, ip);
         Core.settings.put("usid-" + ip, result);
     }
 
@@ -118,6 +127,7 @@ public class User {
     }
 
     public void setUuid() {
+        if (this.uuid() == null) return;
         // Core.settings.getString("uuid", "");
         String result = new String(Base64Coder.encode(this.uuid()));
         Core.settings.put("uuid", result);
@@ -198,7 +208,7 @@ public class User {
         // Basically to prevent java.lang.ArrayIndexOutOfBoundsException
         return switch (parts.length) {
             case 2 -> new User(null, parts[1]);
-            case 3 -> new User(parts[2], parts[1]);
+            case 3 -> new User(null, parts[1], parts[2]);
             case 4 -> new User(parts[3], parts[1], parts[2]);
             default -> new User();
         };
