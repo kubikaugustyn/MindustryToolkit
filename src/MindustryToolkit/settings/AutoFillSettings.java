@@ -5,7 +5,7 @@ import arc.util.Log;
 import mindustry.type.Item;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 
-public class AutoFillSettings {
+public class AutoFillSettings implements FeatureSettings {
     private static final String settingsPrefix = Settings.getSettingsNamePrefix() + "autofill-";
     public static boolean enabled = AutoFillSettingsDefault.enabled;
     public static boolean allowHomingAmmo = AutoFillSettingsDefault.allowHomingAmmo;

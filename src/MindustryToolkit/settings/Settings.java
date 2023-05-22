@@ -6,7 +6,9 @@ import MindustryToolkit.dialogs.FeatureDialog;
 import MindustryToolkit.dialogs.IdentityDialog;
 import arc.Core;
 import arc.func.Cons;
+import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
+import arc.struct.SnapshotSeq;
 import arc.util.*;
 import mindustry.ui.dialogs.FullTextDialog;
 import mindustry.ui.dialogs.SettingsMenuDialog;
@@ -32,8 +34,9 @@ public class Settings {
                 showDialog("Save", "Save!");
             }));*/
 
-//            settings.checkPref(getText("enabled"), true, e -> this.saveSetting(getSettingsNamePrefix() + "enabled", e));
+            // settings.checkPref(getText("enabled"), true, e -> this.saveSetting(getSettingsNamePrefix() + "enabled", e));
 
+            Settings.removeResetToDefault(settings);
             settingsTable.add(settings);
         };
         ui.settings.getCategories().add(new SettingsMenuDialog.SettingsCategory(Settings.getText("title"), new TextureRegionDrawable(Core.atlas.find("mindustry-toolkit-kubikaugustyn-logo")), builder));
@@ -85,5 +88,10 @@ public class Settings {
     public static String getText(String name, String def) {
         String key = "mindustry-toolkit-kubikaugustyn.settings." + name;
         return bundle.get(key, def);
+    }
+
+    public static void removeResetToDefault(SettingsMenuDialog.SettingsTable settings) {
+        SnapshotSeq<Element> children = settings.getChildren();
+        settings.removeChild(children.get(children.size - 1));
     }
 }

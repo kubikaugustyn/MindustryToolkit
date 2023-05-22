@@ -1,5 +1,6 @@
 package MindustryToolkit.dialogs;
 
+import MindustryToolkit.settings.Settings;
 import arc.scene.ui.Dialog;
 import mindustry.graphics.Pal;
 import mindustry.ui.dialogs.BaseDialog;
@@ -20,6 +21,7 @@ public class FeatureDialog extends BaseDialog {
         this.main.center();
         this.cont.add(main);
         this.rebuild();
+        Settings.removeResetToDefault(this.main);
         return super.show();
     }
 

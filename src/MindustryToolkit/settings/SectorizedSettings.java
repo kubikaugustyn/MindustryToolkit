@@ -5,7 +5,7 @@ import arc.util.Log;
 import mindustry.type.Item;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 
-public class SectorizedSettings {
+public class SectorizedSettings implements FeatureSettings {
     private static final String settingsPrefix = Settings.getSettingsNamePrefix() + "sectorized-";
     public static boolean enabled = SectorizedSettingsDefault.enabled;
 

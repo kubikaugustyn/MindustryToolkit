@@ -47,7 +47,9 @@ public class IdentityServerDialog extends BaseDialog {
             origTable.button(Icon.ok, Styles.emptyi, () -> {
                 this.hide();
                 User origUser = new User(null, origUsid, IdentitySettings.originalUUID);
-                origUser.rejoinAs();
+                if (origUser.rejoinAs())
+                    Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to.rollback"));
+                else Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to.fail"));
             });
             this.cont.add(origTable);
         }
@@ -58,7 +60,9 @@ public class IdentityServerDialog extends BaseDialog {
             userTable.labelWrap(user.username() == null ? Settings.getText("identity.server-dialog.keep-name") : user.username()).fillX().center().get().setWrap(false);
             userTable.button(Icon.ok, Styles.emptyi, () -> {
                 this.hide();
-                user.rejoinAs();
+                if (user.rejoinAs())
+                    Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to"));
+                else Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to.fail"));
             });
             this.cont.add(userTable);
             this.cont.row();
@@ -67,6 +71,7 @@ public class IdentityServerDialog extends BaseDialog {
 
     private void fixPausedDialog() {
         if (!IdentitySettings.enabled) return;
+        if (!Vars.net.client() || !Vars.net.active()) return;
         Table root = Vars.ui.paused.cont;
 
         if (Vars.mobile) {

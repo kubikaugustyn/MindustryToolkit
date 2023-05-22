@@ -6,7 +6,7 @@ import mindustry.content.Blocks;
 import mindustry.type.Item;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 
-public class AutoFillSettingsDefault {
+public class AutoFillSettingsDefault implements FeatureSettingsDefault {
     public static boolean enabled = false; // AutoFill enabled, false until I get it working
     public static boolean allowHomingAmmo = false; // (Homing) Ammo like silicon in duo can be used
     public static boolean allowFireAmmo = false; // (Burning)  Ammo like coal in scorch can be used

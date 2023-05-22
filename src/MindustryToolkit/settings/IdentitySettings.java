@@ -3,7 +3,7 @@ package MindustryToolkit.settings;
 import MindustryToolkit.identity.Users;
 import arc.util.Log;
 
-public class IdentitySettings {
+public class IdentitySettings implements FeatureSettings {
     private static final String settingsPrefix = Settings.getSettingsNamePrefix() + "identity-";
     public static boolean enabled = IdentitySettingsDefault.enabled;
     public static Users users = IdentitySettingsDefault.users;
