@@ -30,5 +30,7 @@ public class MindustryToolkitInit extends Mod {
         identity.init();
         sectorized.init();
         Log.info("[blue]Initialised Mindustry Toolkit");
+
+        Updater.check();
     }
 }
