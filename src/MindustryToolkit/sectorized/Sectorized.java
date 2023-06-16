@@ -1,37 +1,29 @@
 package MindustryToolkit.sectorized;
 
-import MindustryToolkit.settings.IdentitySettings;
 import MindustryToolkit.settings.SectorizedSettings;
 import arc.Core;
 import arc.Events;
-import arc.scene.Action;
 import arc.scene.Element;
-import arc.scene.actions.DelayAction;
-import arc.scene.actions.RemoveActorAction;
 import arc.scene.event.Touchable;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Items;
 import mindustry.content.Planets;
+import mindustry.ctype.Content;
 import mindustry.game.EventType;
 import mindustry.type.Item;
 import mindustry.type.ItemSeq;
 import mindustry.type.ItemStack;
 import mindustry.type.Planet;
-import mindustry.ui.Menus;
-import mindustry.ui.dialogs.JoinDialog;
-import mindustry.ui.fragments.PlacementFragment;
 import mindustry.world.Block;
 import mindustry.world.blocks.storage.StorageBlock;
-import mindustry.world.meta.BuildVisibility;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -47,6 +39,8 @@ public class Sectorized {
     public boolean appliedChanges = false;
     @Nullable
     private Planet currentPlanet;
+    private int corePlacementCooldown = 10;
+    private boolean corePlacementLocked = false;
 
     public void init() {
         defaultVaultPrices.put((StorageBlock) Blocks.vault, ItemStack.with(Items.titanium, 250, Items.thorium, 125));
@@ -56,6 +50,8 @@ public class Sectorized {
 
         SectorizedConstants.init();
         SectorizedSettings.init();
+        SectorizedCoreCost.init();
+        Events.on(EventType.CoreChangeEvent.class, this::onCoreChange);
         Events.on(EventType.ClientServerConnectEvent.class, this::onServerConnect);
         Events.on(EventType.WorldLoadBeginEvent.class, this::onWorldLoadBegin);
         Events.run(EventType.Trigger.update, this::onUpdate);
@@ -116,9 +112,9 @@ public class Sectorized {
         ItemSeq requirements = new ItemSeq();
         ItemSeq available = new ItemSeq();
         while (text.length() > 0) {
-            if (!SectorizedCoreCost.unicodeItems.containsKey(String.valueOf(text.charAt(0))))
+            Content cont = SectorizedCoreCost.getContent(text.charAt(0));
+            if (!(cont instanceof Item item))
                 break;
-            Item item = SectorizedCoreCost.unicodeItems.get(String.valueOf(text.charAt(0)));
             ItemStack itemStack = new ItemStack(item, 0);
             ItemStack itemStackAvailable = new ItemStack(item, 0);
             text.deleteCharAt(0);
@@ -139,8 +135,11 @@ public class Sectorized {
             requirements.add(itemStack);
             available.add(itemStackAvailable);
         }
+        /*SectorizedCoreCost.getUnicode(Items.coal);
+        SectorizedCoreCost.getUnicode(Blocks.coreBastion);
+        SectorizedCoreCost.getUnicode(Planets.serpulo);*/
         //Log.info("[cyan]Checked info popup: []" + text);
-        StorageBlock vault = planetToVault.get(this.getCurrentPlanet());
+        StorageBlock vault = getCurrentVault();
         if (vault != null) vault.requirements = requirements.toArray();
     }
 
@@ -153,6 +152,28 @@ public class Sectorized {
         if (!Objects.equals(inside.substring(0, str.length()), str)) return false;
         if (delete) inside.delete(0, str.length());
         return true;
+    }
+
+    private void onCoreChange(EventType.CoreChangeEvent event) {
+        // Log.info("Placed: " + event.core + " - " + (event.core.dead() ? "dead" : "alive"));
+        if (event.core.dead() || event.core.team() != Vars.player.team()) return;
+        this.onCorePlaced();
+    }
+
+    private void onCorePlaced() {
+        setCorePlacementLocked(true);
+        int seconds = Vars.player.team().cores().size <= 2 ? 30 : getCorePlacementCooldown();
+        Timer.schedule(() -> setCorePlacementLocked(false), seconds);
+    }
+
+    private void setCorePlacementLocked(boolean locked) {
+        if (corePlacementLocked == locked) return;
+        corePlacementLocked = locked;
+        Block vault = getCurrentVault();
+        if (vault == null) return;
+        Log.info((locked ? "Lock" : "Unlock") + " " + vault);
+        if (locked && !Vars.state.rules.bannedBlocks.contains(vault)) Vars.state.rules.bannedBlocks.add(vault);
+        else if (!locked && Vars.state.rules.bannedBlocks.contains(vault)) Vars.state.rules.bannedBlocks.remove(vault);
     }
 
     private void onServerConnect(EventType.ClientServerConnectEvent event) {
@@ -189,6 +210,7 @@ public class Sectorized {
         if (appliedChanges) return;
         Log.info("[cyan]Apply changes!");
         // APPLY begin
+        setCorePlacementLocked(false);
         // APPLY end
         appliedChanges = true;
     }
@@ -201,9 +223,15 @@ public class Sectorized {
         if (!appliedChanges) return;
         Log.info("[cyan]Reset changes!");
         // RESET begin
+        setCorePlacementLocked(false);
         Sectorized.defaultVaultPrices.forEach((block, requirements) -> block.requirements = requirements);
         // RESET end
         appliedChanges = false;
+    }
+
+    @Nullable
+    private StorageBlock getCurrentVault() {
+        return planetToVault.get(this.getCurrentPlanet());
     }
 
     @Nullable
@@ -220,5 +248,9 @@ public class Sectorized {
             return null;
         }*/
         return currentPlanet;
+    }
+
+    private int getCorePlacementCooldown() {
+        return corePlacementCooldown = getCurrentPlanet() == Planets.serpulo ? 10 : 15;
     }
 }

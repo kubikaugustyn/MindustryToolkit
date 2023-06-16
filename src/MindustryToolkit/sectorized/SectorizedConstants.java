@@ -6,7 +6,7 @@ import mindustry.world.Block;
 import java.util.HashMap;
 
 public class SectorizedConstants {
-    public static void init(){
+    public static void init() {
 
     }
 

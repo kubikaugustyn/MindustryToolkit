@@ -103,13 +103,15 @@ public class AutoFill {
         Vars.indexer.eachBlock(team, player.x, player.y, Vars.buildingRange, (Building building) -> !isBlockIgnored(building.block()) && building.block.hasConsumers, buildingsInRange::add);
         if (buildingsInRange.any() && isCoreAvailable) {
             FillableBlockCategory[] categories = this.getBlocksToFill(buildingsInRange);
+            Whole:
             for (FillableBlockCategory category : categories) {
-                boolean isTurret = Objects.equals(category.name(), "turret");
+                boolean isTurret = "turret".equals(category.name());
+                Vars.player.sendMessage("Category " + category.name() + " has " + category.blocks().length + " blocks.");
                 for (FillableBlock block : category.blocks()) {
                     if (isTurret) {
                         // if (!b.ammo.isEmpty()) return;// v6
-                        if (((ItemTurret) block.block()).ammoTypes.isEmpty()) return;
-                        if (block.building().items.any()) return;
+                        if (((ItemTurret) block.block()).ammoTypes.isEmpty()) continue;
+                        if (block.building().items.any()) continue;
                         // Log.info("[cyan]Fill turret!");
                         // Item bestAmmo = getBestAmmo((ItemTurret) block, core); Old way
                         Item[] bestAmmoList = AutoFillSettings.turretAmmo.get((ItemTurret) block.block());
@@ -120,7 +122,7 @@ public class AutoFill {
                                 break;
                             }
                         }
-                        if (bestAmmo == null) return;
+                        if (bestAmmo == null) continue;
                         Vars.player.sendMessage("Chose " + bestAmmo.localizedName + " to fill " + block.block().localizedName + " at " + block.building().tile().x + " " + block.building().tile().y + " with " + block.building().items.total() + " items inside out of " + block.building().getMaximumAccepted(null));
                         request.set(bestAmmo);
                     } else if (block.building() != null) {
@@ -128,6 +130,8 @@ public class AutoFill {
                     } else {
                         request.set(block.itemsIn()[0]);
                     }
+                    Vars.player.sendMessage("Chose " + request.get());
+                    //break Whole;
                 }
             }
         }

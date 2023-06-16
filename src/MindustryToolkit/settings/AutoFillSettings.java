@@ -29,6 +29,7 @@ public class AutoFillSettings implements FeatureSettings {
 
     public static void saveSettings() {
         Log.info((AutoFillSettings.enabled ? "Enabled" : "Disabled") + " Autofill!");
+        AutoFillSettingsDefault.onSettingsChange();
         Settings.saveBoolSetting(AutoFillSettings.namePrefix("enabled"), AutoFillSettings.enabled);
         Settings.saveBoolSetting(AutoFillSettings.namePrefix("allow-homing-ammo"), AutoFillSettings.allowHomingAmmo);
         Settings.saveBoolSetting(AutoFillSettings.namePrefix("allow-fire-ammo"), AutoFillSettings.allowFireAmmo);

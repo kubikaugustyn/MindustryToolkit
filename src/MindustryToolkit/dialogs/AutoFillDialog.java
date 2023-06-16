@@ -35,7 +35,7 @@ public class AutoFillDialog extends FeatureDialog {
         this.main.checkPref(Settings.getText("autofill.allow-fire-ammo"), AutoFillSettings.allowFireAmmo, this.allowFireAmmo::set);
         this.main.sliderPref(Settings.getText("autofill.min-turret-core-items"), AutoFillSettings.minTurretCoreItems, 0, 500, 10, i -> {
             this.minTurretCoreItems.set(i);
-            return i + "";
+            return String.valueOf(i);
         });
         this.main.pref(new ButtonSetting(Settings.getText("save"), this::onSaveClick));
     }

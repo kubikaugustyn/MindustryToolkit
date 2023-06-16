@@ -1,16 +1,26 @@
 package MindustryToolkit.sectorized;
 
+import arc.struct.ObjectIntMap;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.content.Items;
 import mindustry.content.Planets;
+import mindustry.ctype.Content;
+import mindustry.ctype.ContentType;
+import mindustry.ctype.MappableContent;
 import mindustry.game.Team;
 import mindustry.type.Item;
 import mindustry.type.ItemSeq;
+import mindustry.ui.Fonts;
+import mindustry.ui.dialogs.JoinDialog;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class SectorizedCoreCost {
-    public static final HashMap<Item, String> itemUnicodes = new HashMap<>() {{
+    private static ObjectIntMap<String> unicodeIcons = new ObjectIntMap<>();
+    /*public static final HashMap<Item, String> itemUnicodes = new HashMap<>() {{
         put(Items.copper, "\uF838");
         put(Items.lead, "\uF837");
         put(Items.graphite, "\uF835");
@@ -42,7 +52,7 @@ public class SectorizedCoreCost {
         put("\uF739", Items.tungsten);
         put("\uF721", Items.oxide);
         put("\uF736", Items.carbide);
-    }};
+    }};*/
 
     private static final int size = 25;
     private static final int maxTeamSize = 4;
@@ -106,5 +116,35 @@ public class SectorizedCoreCost {
         int size = Math.max(Math.min(team.data().players.size - 1, maxTeamSize - 1), 0);
 
         return Vars.state.getPlanet() == Planets.serpulo ? requirementsSerpulo[core][size] : requirementsErekir[core][size];
+    }
+
+    public static int getUnicode(MappableContent content) {
+        return getUnicode(content.name);
+    }
+
+    public static int getUnicode(String content) {
+        return unicodeIcons.get(content, 0);
+    }
+
+    public static Content getContent(char unicode) {
+        return getContent((int) unicode);
+    }
+
+    public static Content getContent(int unicode) {
+        String content = unicodeIcons.findKey(unicode);
+        Seq<Content>[] allContent = Vars.content.getContentMap();
+        for (Seq<Content> array : allContent) {
+            return array.find(cont -> cont instanceof MappableContent && Objects.equals(((MappableContent) cont).name, content));
+        }
+        return null;
+    }
+
+    public static void init() {
+        try {
+            Field unicodeIconsField = Fonts.class.getDeclaredField("unicodeIcons");
+            unicodeIconsField.setAccessible(true);
+            unicodeIcons = (ObjectIntMap<String>) unicodeIconsField.get(Fonts.class);
+        } catch (Exception ignored) {
+        }
     }
 }
