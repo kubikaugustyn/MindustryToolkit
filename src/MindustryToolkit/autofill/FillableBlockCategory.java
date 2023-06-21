@@ -51,8 +51,7 @@ public class FillableBlockCategory {
 
     public FillableBlockCategory blocks(Seq<FillableBlock> blocks) {
         FillableBlock[] fillableBlocks = new FillableBlock[blocks.size];
-        int i = 0;
-        for (FillableBlock bl : blocks) fillableBlocks[i++] = bl;
+        for (int i = 0; i < blocks.size; i++) fillableBlocks[i] = blocks.get(i);
         this.blocks(fillableBlocks);
         return this;
     }

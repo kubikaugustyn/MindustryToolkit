@@ -106,32 +106,42 @@ public class AutoFill {
             Whole:
             for (FillableBlockCategory category : categories) {
                 boolean isTurret = "turret".equals(category.name());
-                Vars.player.sendMessage("Category " + category.name() + " has " + category.blocks().length + " blocks.");
+                //Vars.player.sendMessage("Category " + category.name() + " has " + category.blocks().length + " blocks.");
                 for (FillableBlock block : category.blocks()) {
+                    Building b = block.building();
+                    // Inventory --> building
+                    //Log.info("Max amount: " + b.acceptStack(stack.item, stack.amount, player.unit()) + " into " + b + " - " + stack.item);
+                    if (b.acceptStack(stack.item, stack.amount, player.unit()) >= 1) {
+                        Call.transferInventory(player, b);
+                        //Log.info("Transfer inventory!!!");
+                        interactTimer.update();
+                        transferred.set(true);
+                    }
                     if (isTurret) {
                         // if (!b.ammo.isEmpty()) return;// v6
                         if (((ItemTurret) block.block()).ammoTypes.isEmpty()) continue;
-                        if (block.building().items.any()) continue;
+                        if (b.items.any() && ((ItemTurret.ItemTurretBuild) b).totalAmmo > 0) continue;
                         // Log.info("[cyan]Fill turret!");
                         // Item bestAmmo = getBestAmmo((ItemTurret) block, core); Old way
                         Item[] bestAmmoList = AutoFillSettings.turretAmmo.get((ItemTurret) block.block());
                         Item bestAmmo = null;
                         for (Item ammo : bestAmmoList) {
+                            //Vars.player.sendMessage("Turret: " + core.items.get(ammo) + ">=" + AutoFillSettings.minTurretCoreItems + " - " + ammo.localizedName);
                             if (core.items.get(ammo) >= AutoFillSettings.minTurretCoreItems) {
                                 bestAmmo = ammo;
                                 break;
                             }
                         }
-                        if (bestAmmo == null) continue;
-                        Vars.player.sendMessage("Chose " + bestAmmo.localizedName + " to fill " + block.block().localizedName + " at " + block.building().tile().x + " " + block.building().tile().y + " with " + block.building().items.total() + " items inside out of " + block.building().getMaximumAccepted(null));
+                        if (bestAmmo == null || b.acceptStack(bestAmmo, 999, player.unit()) == 0) continue;
                         request.set(bestAmmo);
+                        //Vars.player.sendMessage("Chose " + bestAmmo.localizedName + " to fill " + block.block().localizedName + " at " + b.tile().x + " " + b.tile().y + " with " + +b.items.total() + " (" + ((ItemTurret.ItemTurretBuild) b).totalAmmo + ") items inside out of " + b.getMaximumAccepted(null));
                     } else if (block.building() != null) {
                         request.set(findRequiredItem(block.itemsIn(), block.building(), core));
                     } else {
                         request.set(block.itemsIn()[0]);
                     }
-                    Vars.player.sendMessage("Chose " + request.get());
-                    //break Whole;
+                    //Vars.player.sendMessage("Chose " + request.get());
+                    if (transferred.get()) break Whole;
                 }
             }
         }
@@ -197,7 +207,8 @@ public class AutoFill {
             return;
         }
 
-        if (stack.amount > 0) {
+        // Core --> inventory
+        if (stack.item != request.get() && stack.amount > 0) { // If we have items in stack, that isn't the wanted item
             Call.transferInventory(player, core);
             if (stack.amount > 0) { // Throw out items, that core doesn't accept
                 Call.dropItem(0F);
@@ -212,7 +223,7 @@ public class AutoFill {
         return new FillableBlockCategory[]{
                 new FillableBlockCategory("turret", buildings, b -> b.block() instanceof ItemTurret, building ->
                         new FillableBlock().block(building.block()).itemsIn(getBestAmmoList((ItemTurret) building.block())).building(building)
-                ),
+                )/*,
                 new FillableBlockCategory("unit-factory", buildings, b -> b.block() instanceof UnitFactory && ((UnitFactory.UnitFactoryBuild) b).currentPlan > -1, building ->
                         new FillableBlock().block(building.block()).itemsIn(((UnitFactory) building.block()).plans.get(((UnitFactory.UnitFactoryBuild) building).currentPlan).requirements).building(building)
                 ),
@@ -221,7 +232,7 @@ public class AutoFill {
                 ),
                 new FillableBlockCategory("crafter", buildings, b -> b.block() instanceof GenericCrafter, building ->
                         new FillableBlock().block(building.block()).itemsIn(getItemStacks(getItemConsumers(building.block()))).building(building)
-                )
+                )*/
         };
     }
 
@@ -279,7 +290,7 @@ public class AutoFill {
             float totalDamage = ammo.damage + ammo.splashDamage;
             ItemDamage itemDamage = new ItemDamage(item, totalDamage, true);
             itemDamages[i] = itemDamage;
-            Log.info("Best ammo list for " + turret.localizedName + " at " + i + " is " + (itemDamages[i] == null ? "null" : "defined: " + itemDamages[i].ammo.localizedName));
+            //Log.info("Best ammo list for " + turret.localizedName + " at " + i + " is " + (itemDamages[i] == null ? "null" : "defined: " + itemDamages[i].ammo.localizedName));
             if (!(!AutoFillSettings.allowHomingAmmo || ammo.homingPower <= 0f))
                 itemDamage.allowed = false; // Allow homing ammo setting
             if (!(!AutoFillSettings.allowFireAmmo || !ammo.makeFire))
@@ -318,7 +329,7 @@ public class AutoFill {
     public Item findRequiredItem(ItemStack[] stacks, Building build, CoreBlock.CoreBuild core) {
         for (ItemStack itemStack : stacks) {
             Item item = itemStack.item;
-            if (core.items.get(item) >= 20 && build.acceptStack(item, 20, Vars.player.unit()) >= 1) {
+            if (core.items.get(item) >= AutoFillSettings.minTurretCoreItems && build.acceptStack(item, 999, Vars.player.unit()) >= 1) {
                 return item;
             }
         }
@@ -328,10 +339,10 @@ public class AutoFill {
     public Item findRequiredItem(Item[] items, Building build, CoreBlock.CoreBuild core) {
         for (Item item : items) {
             if (item == null) {
-                Log.info("Something fucked up, we have null item in findRequiredItem.");
+                Log.info("[red]Something fucked up, we have null item in findRequiredItem.");
                 continue;
             }
-            if (core.items.get(item) >= 20 && build.acceptStack(item, 999, Vars.player.unit()) >= 1) {
+            if (core.items.get(item) >= AutoFillSettings.minTurretCoreItems && build.acceptStack(item, 999, Vars.player.unit()) >= 1) {
                 return item;
             }
         }
