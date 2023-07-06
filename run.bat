@@ -10,6 +10,6 @@ rmdir /s /q "C:\Users\Radek Augustyn\Desktop\Kubik\MindustryToolkit\.gradle\"
 echo Cleaned up
 echo Starting...
 rem start /B /d "C:\KubaPrograms\Mindustry\relase-141.2" Mindustry.exe
-cd "C:\KubaPrograms\Mindustry\relase-144.1"
+cd "C:\KubaPrograms\Mindustry\relase-145.1"
 java -jar Mindustry.jar
 echo Started

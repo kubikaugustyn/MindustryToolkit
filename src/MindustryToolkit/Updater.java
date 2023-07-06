@@ -10,8 +10,8 @@ import arc.files.Fi;
 import arc.files.ZipFi;
 import mindustry.mod.Mods.LoadedMod;
 
-import static arc.Core.*;
-import static mindustry.Vars.*;
+import arc.Core;
+import mindustry.Vars;
 
 import java.net.*;
 
@@ -26,8 +26,8 @@ public class Updater {
     public static String download;
 
     public static void init() {
-        mod = mods.getMod(MindustryToolkitInit.class);
-        url = ghApi + "/repos/" + repo + "/releases/latest";
+        mod = Vars.mods.getMod(MindustryToolkitInit.class);
+        url = Vars.ghApi + "/repos/" + repo + "/releases/latest";
 
         Jval meta = Jval.read(new ZipFi(mod.file).child("mod.hjson").readString());
         mod.meta.author = meta.getString("author"); // restore colors in mod's meta
@@ -38,36 +38,43 @@ public class Updater {
         Http.get(url, res -> {
             Jval json = Jval.read(res.getResultAsString());
             String latest = json.getString("tag_name").substring(1);
+            Jval.JsonArray assets = json.get("assets").asArray();
+            for (Jval obj : assets) Log.info("Asset: " + obj.toString());
             download = json.get("assets").asArray().get(0).getString("browser_download_url");
 
-            if (!latest.equals(mod.meta.version)) ui.showCustomConfirm(
-                    Settings.getText("updater.title"), bundle.format(Settings.getText("updater.info"), mod.meta.version, latest),
-                    Settings.getText("updater.load"), "@ok", Updater::update, () -> {});
-        }, a->Log.err("[cyan]Failed to check for updates."));
+            if (!latest.equals(mod.meta.version)) Vars.ui.showCustomConfirm(
+                    Settings.getText("updater.title"), Core.bundle.format(Settings.getText("updater.info"), mod.meta.version, latest),
+                    Settings.getText("updater.load"), "@ok", Updater::update, () -> {
+                    });
+        }, a -> Log.err("[cyan]Failed to check for updates."));
     }
 
     public static void update() {
         try { // dancing with tambourines, just to remove the old mod
             if (mod.loader instanceof URLClassLoader cl) cl.close();
             mod.loader = null;
-        } catch (Throwable e) { Log.err(e); } // this has never happened before, but everything can be
+        } catch (Throwable e) {
+            Log.err(e);
+        } // this has never happened before, but everything can be
 
-        ui.loadfrag.show("@downloading");
-        ui.loadfrag.setProgress(() -> progress);
+        Vars.ui.loadfrag.show("@downloading");
+        Vars.ui.loadfrag.setProgress(() -> progress);
 
-        Http.get(download, Updater::handle, a->Log.err("[cyan]Failed to update."));
+        Http.get(download, Updater::handle, a -> Log.err("[cyan]Failed to update."));
     }
 
     public static void handle(HttpResponse res) {
         try {
-            Fi file = tmpDirectory.child(repo.replace("/", "") + ".zip");
+            Fi file = Vars.tmpDirectory.child(repo.replace("/", "") + ".zip");
             Streams.copyProgress(res.getResultAsStream(), file.write(false), res.getContentLength(), 4096, p -> progress = p);
 
-            mods.importMod(file).setRepo(repo);
+            Vars.mods.importMod(file).setRepo(repo);
             file.delete();
 
-            app.post(ui.loadfrag::hide);
-            ui.showInfoOnHidden("@mods.reloadexit", app::exit);
-        } catch (Throwable e) { Log.err(e); }
+            Core.app.post(Vars.ui.loadfrag::hide);
+            Vars.ui.showInfoOnHidden("@mods.reloadexit", Core.app::exit);
+        } catch (Throwable e) {
+            Log.err(e);
+        }
     }
 }

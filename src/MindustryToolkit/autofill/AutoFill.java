@@ -142,6 +142,7 @@ public class AutoFill {
                     }
                     //Vars.player.sendMessage("Chose " + request.get());
                     if (transferred.get()) break Whole;
+                    if (request.get() != null) break Whole;
                 }
             }
         }
@@ -223,7 +224,7 @@ public class AutoFill {
         return new FillableBlockCategory[]{
                 new FillableBlockCategory("turret", buildings, b -> b.block() instanceof ItemTurret, building ->
                         new FillableBlock().block(building.block()).itemsIn(getBestAmmoList((ItemTurret) building.block())).building(building)
-                )/*,
+                ),
                 new FillableBlockCategory("unit-factory", buildings, b -> b.block() instanceof UnitFactory && ((UnitFactory.UnitFactoryBuild) b).currentPlan > -1, building ->
                         new FillableBlock().block(building.block()).itemsIn(((UnitFactory) building.block()).plans.get(((UnitFactory.UnitFactoryBuild) building).currentPlan).requirements).building(building)
                 ),
@@ -232,7 +233,7 @@ public class AutoFill {
                 ),
                 new FillableBlockCategory("crafter", buildings, b -> b.block() instanceof GenericCrafter, building ->
                         new FillableBlock().block(building.block()).itemsIn(getItemStacks(getItemConsumers(building.block()))).building(building)
-                )*/
+                )
         };
     }
 

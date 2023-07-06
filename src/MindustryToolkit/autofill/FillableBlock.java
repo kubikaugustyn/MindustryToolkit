@@ -43,7 +43,7 @@ public class FillableBlock {
     public FillableBlock itemsIn(ItemStack[] itemsIn) {
         Item[] items = new Item[itemsIn.length];
         int i = 0;
-        for (ItemStack stack : itemsIn) items[i] = stack.item;
+        for (ItemStack stack : itemsIn) items[i++] = stack.item;
         this.itemsIn(items);
         return this;
     }

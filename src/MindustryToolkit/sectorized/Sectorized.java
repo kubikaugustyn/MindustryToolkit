@@ -17,6 +17,7 @@ import mindustry.content.Items;
 import mindustry.content.Planets;
 import mindustry.ctype.Content;
 import mindustry.game.EventType;
+import mindustry.logic.LAccess;
 import mindustry.type.Item;
 import mindustry.type.ItemSeq;
 import mindustry.type.ItemStack;
@@ -32,10 +33,7 @@ public class Sectorized {
     public static final Seq<SectorizedServer> sectorizedServers = Seq.with(new SectorizedServer("89.58.37.204", 6567), new SectorizedServer("sectorized.freeddns.org", 6567));
     public static final HashMap<StorageBlock, ItemStack[]> defaultVaultPrices = new HashMap<>();
     public static final HashMap<Planet, StorageBlock> planetToVault = new HashMap<>();
-    public static final byte StateWait = 0;
-    public static final byte StateConnectingToSectorized = 1;
-    public static final byte StateConnectingToOther = 2;
-    public byte state = Sectorized.StateWait;
+    public State state = State.Wait;
     public boolean appliedChanges = false;
     @Nullable
     private Planet currentPlanet;
@@ -181,32 +179,32 @@ public class Sectorized {
         Log.info("Connected to: " + event.ip + ":" + event.port);
         for (SectorizedServer server : Sectorized.sectorizedServers) {
             if (Objects.equals(server.ip, event.ip) && server.port == event.port) {
-                state = Sectorized.StateConnectingToSectorized;
+                state = State.ConnectingToSectorized;
                 return;
             }
         }
         this.resetChanges();
-        state = Sectorized.StateConnectingToOther;
+        state = State.ConnectingToOther;
     }
 
     private void onWorldLoadBegin(EventType.WorldLoadBeginEvent event) {
         if (!SectorizedSettings.enabled) return;
-        if (state == Sectorized.StateWait) {
+        if (state == State.Wait) {
             this.resetChanges();
             return;
         }
-        if (state == Sectorized.StateConnectingToSectorized) {
+        if (state == State.ConnectingToSectorized) {
             this.applyChanges();
             return;
         }
-        if (state == Sectorized.StateConnectingToOther) this.resetChanges();
+        if (state == State.ConnectingToOther) this.resetChanges();
     }
 
     /**
      * Do changes reset by resetChanges when joining different server than Sectorized
      */
     private void applyChanges() {
-        state = Sectorized.StateWait;
+        state = State.Wait;
         if (appliedChanges) return;
         Log.info("[cyan]Apply changes!");
         // APPLY begin
@@ -219,7 +217,7 @@ public class Sectorized {
      * Reset changes made by applyChanges when joining Sectorized
      */
     private void resetChanges() {
-        state = Sectorized.StateWait;
+        state = State.Wait;
         if (!appliedChanges) return;
         Log.info("[cyan]Reset changes!");
         // RESET begin
@@ -252,5 +250,9 @@ public class Sectorized {
 
     private int getCorePlacementCooldown() {
         return corePlacementCooldown = getCurrentPlanet() == Planets.serpulo ? 10 : 15;
+    }
+
+    private enum State {
+        Wait, ConnectingToSectorized, ConnectingToOther
     }
 }

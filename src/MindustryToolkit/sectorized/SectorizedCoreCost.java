@@ -2,6 +2,7 @@ package MindustryToolkit.sectorized;
 
 import arc.struct.ObjectIntMap;
 import arc.struct.Seq;
+import arc.util.Log;
 import mindustry.Vars;
 import mindustry.content.Items;
 import mindustry.content.Planets;
@@ -143,7 +144,12 @@ public class SectorizedCoreCost {
         try {
             Field unicodeIconsField = Fonts.class.getDeclaredField("unicodeIcons");
             unicodeIconsField.setAccessible(true);
-            unicodeIcons = (ObjectIntMap<String>) unicodeIconsField.get(Fonts.class);
+            Object field = unicodeIconsField.get(Fonts.class);
+            if (!(field instanceof ObjectIntMap<?> fieldAny)) {
+                Log.err("Wtf?! - SectorizedCoreCost.java");
+                return;
+            }
+            unicodeIcons = (ObjectIntMap<String>) fieldAny;
         } catch (Exception ignored) {
         }
     }

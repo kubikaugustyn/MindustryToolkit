@@ -29,8 +29,9 @@ public class Identity {
                         !ui.database.isShown() &&
                         !ui.consolefrag.shown() &&
                         !ui.content.isShown() &&
+                        !ui.logic.isShown() &&
                         Vars.net.active()) {
-                    Log.info("Key event: " + keyCode.value);
+                    //Log.info("Key event: " + keyCode.value);
                     if (IdentitySettings.enabled && IdentitySettings.quickKey.equalsIgnoreCase(keyCode.value)) {
                         identityServerDialog.show();
                     }
