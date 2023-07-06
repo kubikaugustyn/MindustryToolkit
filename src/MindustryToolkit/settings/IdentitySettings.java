@@ -13,6 +13,12 @@ public class IdentitySettings implements FeatureSettings {
     public static void init() {
         // This method must be called only once!
         IdentitySettingsDefault.init();
+        /*try { // Test for Issue #2
+            Log.warn(IdentitySettingsDefault.users.toString()); // "[]"
+            Log.warn(Users.fromString(IdentitySettingsDefault.users.toString()).toString()); // "[]"
+        } catch (Exception e) {
+            Log.err(e);
+        }*/
         readSettings();
     }
 
@@ -38,7 +44,7 @@ public class IdentitySettings implements FeatureSettings {
     }
 
     public static String readOriginalUsid(String ip) {
-        return Settings.readStringSetting(IdentitySettings.namePrefix("originalUSID-" + ip),null);
+        return Settings.readStringSetting(IdentitySettings.namePrefix("originalUSID-" + ip), null);
     }
 
     private static String namePrefix(String name) {

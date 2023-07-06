@@ -4,7 +4,7 @@ name: "mindustry-toolkit-kubikaugustyn"
 author: "Jakub Augustýn"
 main: "MindustryToolkit.MindustryToolkitInit"
 description: "A Mindustry toolkit mod by GitHub - kubikaugustyn / Discord - HackerKuba2009#9722"
-version: 1.0
+version: 1.1
 minGameVersion: 145
 hidden: true
 java: true

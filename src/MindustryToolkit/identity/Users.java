@@ -79,6 +79,7 @@ public class Users {
     }
 
     public static Users fromString(String source) {
+        if (source == null || source.trim().length() == 0 || "[]".equals(source)) return Users.blank;
         // Log.info("Parsing users of: " + source);
         source = source.substring(2, source.length() - 2);
         String[] userStrings = source.split("\",\"");
