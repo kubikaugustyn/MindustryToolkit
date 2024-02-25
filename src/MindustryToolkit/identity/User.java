@@ -39,8 +39,9 @@ public class User {
         return this;
     }
 
-    public void setUsername() {
+    public void setUsername(String ip) {
         if (this.username() == null || this.username.trim().isEmpty()) return;
+        IdentitySettings.saveOriginalUsername(this.username(), ip);
         Core.settings.put("name", this.username());
         Vars.player.name(this.username());
     }
@@ -80,7 +81,7 @@ public class User {
 
             this.setUsid(ip);
             this.setUuid();
-            this.setUsername();
+            this.setUsername(ip);
             return true;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();

@@ -9,10 +9,10 @@ import mindustry.content.Blocks;
 import mindustry.mod.*;
 
 public class MindustryToolkitInit extends Mod {
-    Settings settings = new Settings();
-    AutoFill autoFill = new AutoFill();
-    Identity identity = new Identity();
-    Sectorized sectorized = new Sectorized();
+    public static Settings settings = new Settings();
+    public static AutoFill autoFill = new AutoFill();
+    public static Identity identity = new Identity();
+    public static Sectorized sectorized = new Sectorized();
 
     @Override
     public void loadContent() {

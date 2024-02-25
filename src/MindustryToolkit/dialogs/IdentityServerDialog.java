@@ -1,5 +1,7 @@
 package MindustryToolkit.dialogs;
 
+import MindustryToolkit.MindustryToolkitInit;
+import MindustryToolkit.identity.Identity;
 import MindustryToolkit.identity.User;
 import MindustryToolkit.settings.IdentitySettings;
 import MindustryToolkit.settings.Settings;
@@ -14,11 +16,17 @@ import mindustry.ui.dialogs.BaseDialog;
 
 public class IdentityServerDialog extends BaseDialog {
     public static String title = Settings.getText("identity.server-dialog.title");
+    private boolean isInJoin = true;
 
     public IdentityServerDialog() {
         super(title);
 
         Vars.ui.paused.shown(this::fixPausedDialog);
+    }
+
+    public Dialog show(boolean isInJoin) {
+        this.isInJoin = isInJoin;
+        return show();
     }
 
     public Dialog show() {
@@ -34,11 +42,13 @@ public class IdentityServerDialog extends BaseDialog {
         this.cont.row();
         String serverIp = null;
         try {
-            serverIp = User.getCurrentServerIp();
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+            if (isInJoin) serverIp = MindustryToolkitInit.identity.getCurrentServerIp();
+            else serverIp = User.getCurrentServerIp();
+        } catch (NoSuchFieldException | IllegalAccessException | NullPointerException e) {
             e.printStackTrace();
         }
         String origUsid = serverIp == null ? null : IdentitySettings.readOriginalUsid(serverIp);
+        String origUsername = serverIp == null ? null : IdentitySettings.readOriginalUsername(serverIp);
         Log.info("Server IP: " + serverIp);
         if (Vars.net.client() && Vars.net.active() && origUsid != null) {
             Table origTable = new Table();
@@ -46,8 +56,8 @@ public class IdentityServerDialog extends BaseDialog {
             origTable.labelWrap(Settings.getText("identity.server-dialog.rollback-to-original")).fillX().center().get().setWrap(false);
             origTable.button(Icon.ok, Styles.emptyi, () -> {
                 this.hide();
-                User origUser = new User(null, origUsid, IdentitySettings.originalUUID);
-                if (origUser.rejoinAs())
+                User origUser = new User(origUsername, origUsid, IdentitySettings.originalUUID);
+                if (isInJoin ? origUser.switchTo() : origUser.rejoinAs())
                     Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to.rollback"));
                 else Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to.fail"));
             });
@@ -60,7 +70,7 @@ public class IdentityServerDialog extends BaseDialog {
             userTable.labelWrap(user.username() == null ? Settings.getText("identity.server-dialog.keep-name") : user.username()).fillX().center().get().setWrap(false);
             userTable.button(Icon.ok, Styles.emptyi, () -> {
                 this.hide();
-                if (user.rejoinAs())
+                if (isInJoin ? user.switchTo() : user.rejoinAs())
                     Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to"));
                 else Vars.ui.hudfrag.showToast(Settings.getText("identity.server-dialog.switched-to.fail"));
             });

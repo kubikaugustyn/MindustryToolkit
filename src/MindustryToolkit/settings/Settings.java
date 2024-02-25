@@ -90,6 +90,11 @@ public class Settings {
         return bundle.get(key, def);
     }
 
+    public static String getNonSettingsText(String name) {
+        String key = "mindustry-toolkit-kubikaugustyn." + name;
+        return bundle.get(key);
+    }
+
     public static void removeResetToDefault(SettingsMenuDialog.SettingsTable settings) {
         SnapshotSeq<Element> children = settings.getChildren();
         settings.removeChild(children.get(children.size - 1));

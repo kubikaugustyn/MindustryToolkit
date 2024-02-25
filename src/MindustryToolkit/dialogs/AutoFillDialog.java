@@ -29,6 +29,11 @@ public class AutoFillDialog extends FeatureDialog {
         this.allowHomingAmmo.set(AutoFillSettings.allowHomingAmmo);
         this.allowFireAmmo.set(AutoFillSettings.allowFireAmmo);
         this.minTurretCoreItems.set(AutoFillSettings.minTurretCoreItems);
+
+        // TODO After fixing AutoFill, remove the warning text
+        this.main.pref(new DescriptionSetting(Settings.getText("autofill.do-not-use")));
+        this.main.pref(new DividerSetting());
+
         this.main.checkPref(Settings.getText("autofill.enabled"), AutoFillSettings.enabled, this.enabled::set);
         this.main.pref(new DescriptionSetting(Settings.getText("autofill.ammo-category")));
         this.main.checkPref(Settings.getText("autofill.allow-homing-ammo"), AutoFillSettings.allowHomingAmmo, this.allowHomingAmmo::set);

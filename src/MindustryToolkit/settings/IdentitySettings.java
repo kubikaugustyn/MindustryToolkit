@@ -47,6 +47,16 @@ public class IdentitySettings implements FeatureSettings {
         return Settings.readStringSetting(IdentitySettings.namePrefix("originalUSID-" + ip), null);
     }
 
+    public static void saveOriginalUsername(String username, String ip) {
+        if (Settings.readStringSetting(IdentitySettings.namePrefix("originalUsername-" + ip), null) != null)
+            return;
+        Settings.saveStringSetting(IdentitySettings.namePrefix("originalUsername-" + ip), username);
+    }
+
+    public static String readOriginalUsername(String ip) {
+        return Settings.readStringSetting(IdentitySettings.namePrefix("originalUsername-" + ip), null);
+    }
+
     private static String namePrefix(String name) {
         return settingsPrefix + name;
     }

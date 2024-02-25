@@ -43,8 +43,8 @@ public class Updater {
             download = json.get("assets").asArray().get(0).getString("browser_download_url");
 
             if (!latest.equals(mod.meta.version)) Vars.ui.showCustomConfirm(
-                    Settings.getText("updater.title"), Core.bundle.format(Settings.getText("updater.info"), mod.meta.version, latest),
-                    Settings.getText("updater.load"), "@ok", Updater::update, () -> {
+                    Settings.getNonSettingsText("updater.title"), Core.bundle.format(Settings.getNonSettingsText("updater.info"), mod.meta.version, latest),
+                    Settings.getNonSettingsText("updater.load"), "@ok", Updater::update, () -> {
                     });
         }, a -> Log.err("[cyan]Failed to check for updates."));
     }
